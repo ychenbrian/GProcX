@@ -1,2 +1,3 @@
-# GProcX-A-GUI-tool-for-XProc
-This is an MSc project by Y Chen from the University of Edinburgh.
+# GProcX
+GProcX is a GUI authoring tool for XProc (XML pipeline language).
+https://www.w3.org/TR/xproc/
