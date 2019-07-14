@@ -1,8 +1,7 @@
-package com.oxygenxml.sdksamples.workspace.mainUI;
+package gprocx.mainUI;
 
-import com.oxygenxml.sdksamples.workspace.step.AtomicInfo;
-import com.oxygenxml.sdksamples.workspace.step.Pipeline;
-import org.w3c.dom.Node;
+import gprocx.step.Pipeline;
+import gprocx.step.StepInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,12 +11,14 @@ public class XFrame {
 
     private JFrame frame;
     private JSplitPane splitPane;
-    private XFigureTabs tabManager;
+    private XFigureTabs figureTabs;
     private XConfigTabs configTabs;
+    private XToolbar toolbar;
     private Pipeline selectedPipeline;
+    private String newStep;
 
-    // variables to store basic information
-    private AtomicInfo atomicInfo;
+    //
+    private String[] atomicTypes;
 
     // variables for drawing
     private boolean drawPipelineActive = false;
@@ -31,16 +32,19 @@ public class XFrame {
     public XFrame() {
 
         // setting of the frame
-    	this.frame = new JFrame("Simple flowchart test.");  ////////////////////
+    	this.frame = new JFrame("GProcX - A GUI Tool For XProc");  ////////////////////
     	this.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     	this.frame.setVisible(true);
     	this.frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
+    	this.atomicTypes = StepInfo.getStepTypes();
+
+    	// toolbar
+        this.toolbar = new XToolbar(this);
+        this.frame.getContentPane().add(this.toolbar, BorderLayout.PAGE_START);
+
         this.code = new JTextArea("Test code");
         //this.code.setLineWrap(true);
-
-        // XProc related settings
-        this.atomicInfo = new AtomicInfo();
 
         // set the configuration tabs on the left, more details in mainUI.XConfigTabs
         this.configTabs = new XConfigTabs(this);
@@ -48,38 +52,42 @@ public class XFrame {
 
         // set init selected pipeline
         this.selectedPipeline = new Pipeline(this, "p:declare-step");
+        this.newStep = "p:error";
 
         // set the menu bar, more details in mainUI.XMenuBar
         this.frame.setJMenuBar(new XMenuBar(this));
-
 
         // set the code window on the right
         JPanel codePanel = new JPanel();
         codePanel.add(this.code);
 
         // tab
-        this.tabManager = new XFigureTabs(JTabbedPane.TOP, this);
+        this.figureTabs = new XFigureTabs(JTabbedPane.TOP, this);
 
         this.splitPane = new JSplitPane();
-        this.splitPane.setLeftComponent(this.tabManager);
+        this.splitPane.setLeftComponent(this.figureTabs);
         this.splitPane.setRightComponent(this.code);
 
         this.splitPane.setOneTouchExpandable(true);
         this.splitPane.setContinuousLayout(true);
-        this.splitPane.setDividerLocation(Toolkit.getDefaultToolkit().getScreenSize().width*7/10);
+        this.splitPane.setDividerLocation(Toolkit.getDefaultToolkit().getScreenSize().width*6/10);
 
         this.frame.getContentPane().add(this.splitPane);
+        this.updateInfo();
     }
 
     // core function of the program, update the listed information
     public void updateInfo() {
-        //this.tabManager.updateInfo();
+        //this.figureTabs.updateInfo();
         this.configTabs.updateInfo();
+        if (this.selectedPipeline != null) {
+            this.setCode(this.selectedPipeline.toString());
+        }
     }
 
-    // return the information of an atomic step
-    public Node getAtomicInfo(String type) {
-        return this.atomicInfo.getElement(type);
+    // return the name of all atomic steps
+    public String[] getAtomicTypes() {
+        return this.atomicTypes;
     }
 
     // activate the step drawing
@@ -90,6 +98,14 @@ public class XFrame {
     // checking the step drawing status
     public boolean isDrawStepActive() {
         return drawPipelineActive;
+    }
+
+    public void setNewStep(String newStep) {
+        this.newStep = newStep;
+    }
+
+    public String getNewStep() {
+        return newStep;
     }
 
     public void setDrawPipe01Active(boolean drawPipe01Active) {
@@ -126,19 +142,23 @@ public class XFrame {
 
     public void setSelectedPipeline(Pipeline selectedPipeline) {
         this.selectedPipeline = selectedPipeline;
-        this.setCode(this.selectedPipeline.getType());
+        updateInfo();
     }
 
     public void addPipeline(Pipeline pipeline) {
-        this.tabManager.addStep(pipeline);
+        this.figureTabs.addPipeline(pipeline);
         this.selectedPipeline = pipeline;
     }
 
     public void openTab(UUID uuid) {
-        this.tabManager.openTab(uuid);
+        this.figureTabs.openTab(uuid);
     }
 
     public void removeCurrentTab() {
-        this.tabManager.removeCurrentTab();
+        this.figureTabs.removeCurrentTab();
+    }
+
+    public Pipeline getCurrentPipeline() {
+        return this.figureTabs.getCurrentStep();
     }
 }

@@ -1,6 +1,6 @@
-package com.oxygenxml.sdksamples.workspace.mainUI;
+package gprocx.mainUI;
 
-import com.oxygenxml.sdksamples.workspace.step.Pipeline;
+import gprocx.step.Pipeline;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -18,9 +18,9 @@ public class XFigureTabs extends JTabbedPane {
         this.panels = new ArrayList<XPanel>();
         this.tabs = new ArrayList<XPanel>();
 
-        Pipeline initStep = this.frame.getSelectedPipeline();
-        this.addStep(initStep);
-        this.openTab(initStep.getUUID());
+        Pipeline initPipeline = this.frame.getSelectedPipeline();
+        this.addPipeline(initPipeline);
+        this.openTab(initPipeline.getUUID());
         //this.addMouseListener(new MouseHandler());
     }
 
@@ -28,7 +28,7 @@ public class XFigureTabs extends JTabbedPane {
         this.getCurrentTab().updateInfo();
     }
 
-    public void addStep(Pipeline step) {
+    public void addPipeline(Pipeline step) {
         panels.add(new XPanel(frame, step));
     }
 
@@ -56,9 +56,13 @@ public class XFigureTabs extends JTabbedPane {
 
         if (index >= 0) {   // if already exist the tab
             this.setSelectedIndex(index);
+            this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.updateInfo();
         } else {
             this.addTab(uuid);
             this.setSelectedIndex(this.getTabCount() - 1);
+            this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.updateInfo();
         }
     }
 
@@ -66,6 +70,10 @@ public class XFigureTabs extends JTabbedPane {
         int index = this.getSelectedIndex();
         this.remove(index);
         this.tabs.remove(index);
+
+        this.setSelectedIndex(0);
+        this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+        this.frame.updateInfo();
     }
 
     public XPanel getCurrentTab() {

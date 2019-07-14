@@ -1,15 +1,6 @@
-package com.oxygenxml.sdksamples.workspace.core;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import java.util.ArrayList;
+package gprocx.core;
 
 public class OutPort extends Port {
-
-    public OutPort(Node cNode) {
-        super(cNode);
-    }
 
     public OutPort(String port, boolean primary, boolean sequence, String kind) {
         super(port, primary, sequence, kind);
@@ -22,15 +13,23 @@ public class OutPort extends Port {
 
         for (QName qname : qnames) {
 
-            if (qname.getValue() != null) {
+            if (!qname.getValue().equals("")) {
                 code += " " + qname;
             }
         }
 
         if (!sources.isEmpty()) {
-            code += ">\n    ";
-            for (InSource source : sources) {
+            code += ">\n";
+
+            for (IOSource source : sources) {
+                for (int i = 0; i < this.retract + 1; i++) {
+                    code += "    ";
+                }
                 code += source.toString();
+            }
+
+            for (int i = 0; i < this.retract; i++) {
+                code += "    ";
             }
             code += "</p:output>\n";
         } else {

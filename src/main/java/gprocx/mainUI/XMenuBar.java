@@ -1,4 +1,6 @@
-package com.oxygenxml.sdksamples.workspace.mainUI;
+package gprocx.mainUI;
+
+import gprocx.step.StepInfo;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,6 +27,7 @@ public class XMenuBar extends JMenuBar {
         JMenuItem pipeMenuItem = new JMenuItem("Pipe"); insertMenu.add(pipeMenuItem);
 
         atomicMenuItem.addActionListener(new AtomicMenu());
+        pipeMenuItem.addActionListener(new PipeMenu());
 
         this.add(fileMenu);
         this.add(editMenu);
@@ -34,7 +37,29 @@ public class XMenuBar extends JMenuBar {
     private class AtomicMenu implements ActionListener {
     	
     	public void actionPerformed(ActionEvent e) {
-            frame.setDrawStepActive(true);
+            Object[] selectionValues = StepInfo.getStepTypes();
+
+            Object inputContent = JOptionPane.showInputDialog(
+                    null,
+                    "Choose the atomic step:",
+                    "Atomic step",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    selectionValues,
+                    selectionValues[0]
+            );
+            if (inputContent != null) {
+                frame.setNewStep((String) inputContent);
+                frame.setDrawStepActive(true);
+            }
+
+        }
+    }
+
+    private class PipeMenu implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            frame.setDrawPipe01Active(true);
         }
     }
 }

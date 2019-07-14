@@ -1,4 +1,4 @@
-package com.oxygenxml.sdksamples.workspace.core;
+package gprocx.core;
 
 public class QName {
 
