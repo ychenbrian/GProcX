@@ -4,18 +4,18 @@
 
 <plugin
   id="com.oxygenxml.plugin.gprocx"
- name="GProcX"
- description="Test"
- version="${project.version}"
- vendor="oXygen XML"
- class="gprocx.GProcXPlugin"
- classLoaderType="preferReferencedResources">
+  name="GProcX"
+  description="Test"
+  version="${project.version}"
+  vendor="oXygen XML"
+  class="gprocx.GProcXPlugin"
+  classLoaderType="preferReferencedResources">
  
- <runtime>
-	<librariesFolder name="lib" />
+  <runtime>
     <library name="target/classes" />
-	<librariesFolder name="target/lib" />
- </runtime>
+    <librariesFolder name="target/lib" />
+    <librariesFolder name="lib" />
+  </runtime>
  
   <extension type="WorkspaceAccess" 
   class="gprocx.GProcXPluginExtension"/>

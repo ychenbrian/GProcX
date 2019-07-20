@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="MorganaXProc">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/MorganaXProc.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

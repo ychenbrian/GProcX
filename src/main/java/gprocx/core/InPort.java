@@ -1,45 +1,75 @@
 package gprocx.core;
 
-import gprocx.step.Pipe;
+import gprocx.step.GProcXPipe;
+import gprocx.step.GProcXPipeline;
 
-import java.util.ArrayList;
+public class InPort extends GProcXPort {
 
-public class InPort extends Port {
-
-    public InPort(String port, boolean primary, boolean sequence, String kind) {
-        super(port, primary, sequence, kind);
+    public InPort(GProcXPipeline parent, String port, boolean primary, boolean sequence, String kind) {
+        super(parent, port, primary, sequence, kind);
     }
 
-    public String toString() {
+    public InPort() {
+        super();
+    }
+
+    @Override
+    public String getPort() {
+        for (QName qname : this.qnames) {
+            if (qname.getUriLexical().equals("port")) {
+                return qname.getValue();
+            }
+        }
+        return "source";
+    }
+
+    public String toString(int retract) {
         String code = "";
+
+        for (int i = 0; i < retract; i++) {
+            code += "    ";
+        }
 
         code += "<" + "p:input";
 
+        for (QName namespace : this.namespaces) {
+            if (!hasDefineNS(namespace)) {
+                if (!namespace.getValue().equals("")) {
+                    code += " " + namespace;
+                }
+            }
+        }
         for (QName qname : qnames) {
-
+            if (qname.getUriLexical().equals("primary")) {
+                if (this.getPort().equals("source") && qname.getValue().equals("true")) {
+                    continue;
+                }
+            }
+            if (qname.getUriLexical().equals("sequence") && qname.getValue().equals("false")) {
+                continue;
+            }
             if (!qname.getValue().equals("")) {
                 code += " " + qname.toString();
             }
         }
 
-        if (!sources.isEmpty() || !pipes.isEmpty()) {
+        if (!isBasic()) {
             code += ">\n";
 
-            for (Pipe pipe : pipes) {
-                for (int i = 0; i < this.retract + 2; i++) {
-                    code += "    ";
+            for (GProcXPipe pipe : pipes) {
+                if (!pipe.isValid()) {
+                    continue;
                 }
-                code += pipe.toString();
+               // if (!pipe.isDefault()) {
+                    code += pipe.toString(retract + 1);
+                //}
             }
 
             for (IOSource source : sources) {
-                for (int i = 0; i < this.retract + 2; i++) {
-                    code += "    ";
-                }
-                code += source.toString();
+                code += source.toString(retract + 1);
             }
 
-            for (int i = 0; i < this.retract + 1; i++) {
+            for (int i = 0; i < retract; i++) {
                 code += "    ";
             }
             code += "</p:input>\n";

@@ -1,7 +1,8 @@
 package gprocx.mainUI;
 
-import gprocx.step.Pipe;
-import gprocx.step.Pipeline;
+import com.xml_project.morganaxproc.XProcInterfaceException;
+import gprocx.step.GProcXPipe;
+import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,17 +14,17 @@ import java.util.UUID;
 
 public class XPanel extends JPanel {
 
-    private Pipeline mainPipeline;
-    private Pipeline current;
+    private GProcXPipeline mainPipeline;
+    private GProcXPipeline current;
     private XFrame frame;
-    private Pipe newPipe;
+    private GProcXPipe newPipe;
 
     private boolean existCurrent;
 
     private MouseHandler mouseHandler;
     private MouseMotionHandler mouseMotionHandler;
 
-    public XPanel(XFrame frame, Pipeline mainPipeline) {
+    public XPanel(XFrame frame, GProcXPipeline mainPipeline) {
         this.frame = frame;
         this.mainPipeline = mainPipeline;
         this.current = null;
@@ -39,7 +40,7 @@ public class XPanel extends JPanel {
 
     }
 
-    public Pipeline findPipeline(Point2D p) {
+    public GProcXPipeline findPipeline(Point2D p) {
         return mainPipeline.findChild(p);
     }
 
@@ -70,8 +71,13 @@ public class XPanel extends JPanel {
         return this.mainPipeline.getUUID();
     }
 
-    public Pipeline getMainPipeline() {
+    public GProcXPipeline getMainPipeline() {
         return mainPipeline;
+    }
+
+    public void setMainPipeline(GProcXPipeline mainPipeline) {
+        this.mainPipeline = mainPipeline;
+        repaint();
     }
 
     public void paintComponent(Graphics g) {
@@ -91,7 +97,7 @@ public class XPanel extends JPanel {
         this.mainPipeline.drawPorts(g2, metrics);
     }
 
-    public Pipeline getCurrent() {
+    public GProcXPipeline getCurrent() {
         return this.current;
     }
 
@@ -107,10 +113,11 @@ public class XPanel extends JPanel {
                 existCurrent = true;
                 repaint();
             } else if (frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
-                Pipeline selected = findPipeline(event.getPoint());
+                GProcXPipeline selected = findPipeline(event.getPoint());
 
+                // if select the main inport of the parent
                 if (selected == null && selectInPort(event.getPoint())) {
-                    newPipe = new Pipe(frame);
+                    newPipe = new GProcXPipe(frame);
                     newPipe.setFromPipeline(mainPipeline, true);
 
                     Object[] selectionValues = new Object[mainPipeline.getInputs().size()];
@@ -121,7 +128,7 @@ public class XPanel extends JPanel {
                     Object inputContent = JOptionPane.showInputDialog(
                             null,
                             "Please select the port:",
-                            "Port",
+                            "GProcXPort",
                             JOptionPane.PLAIN_MESSAGE,
                             null,
                             selectionValues,
@@ -133,7 +140,7 @@ public class XPanel extends JPanel {
                     frame.setDrawPipe02Active(true);
                 } else if (selected != null) {
 
-                    newPipe = new Pipe(frame);
+                    newPipe = new GProcXPipe(frame);
                     newPipe.setFromPipeline(selected, false);
 
                     Object[] selectionValues = new Object[selected.getOutputs().size()];
@@ -144,7 +151,7 @@ public class XPanel extends JPanel {
                     Object inputContent = JOptionPane.showInputDialog(
                             null,
                             "Please select the port:",
-                            "Port",
+                            "GProcXPort",
                             JOptionPane.PLAIN_MESSAGE,
                             null,
                             selectionValues,
@@ -157,10 +164,11 @@ public class XPanel extends JPanel {
                     frame.setDrawPipe02Active(true);
                 }
             } else if (!frame.isDrawPipe01Active() && frame.isDrawPipe02Active()) {
-                Pipeline selected = findPipeline(event.getPoint());
+                GProcXPipeline selected = findPipeline(event.getPoint());
 
+                // if select the main outport of the parent
                 if (selected == null && selectOutPort(event.getPoint())) {
-                    newPipe.setToPipeline(selected, true);
+                    newPipe.setToPipeline(mainPipeline, true);
 
                     Object[] selectionValues = new Object[mainPipeline.getOutputs().size()];
                     for (int i = 0; i < mainPipeline.getOutputs().size(); i++) {
@@ -170,7 +178,7 @@ public class XPanel extends JPanel {
                     Object inputContent = JOptionPane.showInputDialog(
                             null,
                             "Please select the port:",
-                            "Port",
+                            "GProcXPort",
                             JOptionPane.PLAIN_MESSAGE,
                             null,
                             selectionValues,
@@ -178,6 +186,7 @@ public class XPanel extends JPanel {
                     );
 
                     newPipe.setToPort(mainPipeline.findOutPort((String) inputContent));
+                    newPipe.setDefault(false);
                     mainPipeline.addPipe(newPipe);
                     frame.setDrawPipe02Active(false);
 
@@ -195,7 +204,7 @@ public class XPanel extends JPanel {
                     Object inputContent = JOptionPane.showInputDialog(
                             null,
                             "Please select the port:",
-                            "Port",
+                            "GProcXPort",
                             JOptionPane.PLAIN_MESSAGE,
                             null,
                             selectionValues,
@@ -203,6 +212,7 @@ public class XPanel extends JPanel {
                     );
 
                     newPipe.setToPort(selected.findInPort((String) inputContent));
+                    newPipe.setDefault(false);
                     mainPipeline.addPipe(newPipe);
                     frame.setDrawPipe02Active(false);
 
@@ -215,7 +225,7 @@ public class XPanel extends JPanel {
         public void mouseClicked(MouseEvent event) {
             // remove the current square if double clicked
             if (!frame.isDrawStepActive()) {
-                Pipeline selected = findPipeline(event.getPoint());
+                GProcXPipeline selected = findPipeline(event.getPoint());
                 if (selected == null && event.getClickCount() == 1) {
                     frame.setSelectedPipeline(mainPipeline);
                     frame.updateInfo();
@@ -250,25 +260,41 @@ public class XPanel extends JPanel {
             if (!frame.isDrawStepActive()) {
                 current = findPipeline(event.getPoint());
                 if (current == null) {
-                    setCursor(Cursor.getDefaultCursor());
+                    if (selectInPort(event.getPoint()) || selectOutPort(event.getPoint())) {
+                        setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                    } else {
+                        setCursor(Cursor.getDefaultCursor());
+                    }
                 } else {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                    if (!frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
+                        setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                    } else {
+                        setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                    }
                     this.xDiff = event.getX() - current.getX();
                     this.yDiff = event.getY() - current.getY();
                 }
+
+
             } else {
                 // if the drawing is activated
                 if (existCurrent) {
-                    current = new Pipeline(frame, frame.getNewStep());
+                    try {
+                        current = new GProcXPipeline(frame, frame.getNewStep());
+                    } catch (XProcInterfaceException e) {
+                        e.printStackTrace();
+                    }
                     frame.addPipeline(current);
                     mainPipeline.addChildren(current);
 
                     existCurrent = false;
                 }
 
+
                 current.setShape(event.getX(), event.getY(),
                         (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 15,
                         (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 18);
+                frame.updateSequence();
 
                 repaint();
             }
@@ -282,6 +308,7 @@ public class XPanel extends JPanel {
                     // drag the current rectangle to center it at (x, y)
                     current.setShape(event.getX() - xDiff, event.getY() - yDiff, current.getW(), current.getH());
                     mainPipeline.updatePipes();
+                    frame.updateSequence();
                     repaint();
                 }
             }

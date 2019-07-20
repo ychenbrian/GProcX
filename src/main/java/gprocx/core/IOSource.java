@@ -4,7 +4,10 @@ import java.util.ArrayList;
 
 public class IOSource {
 
-    private ArrayList<QName> qnames;
+    private GProcXPort parent;
+    private ArrayList<QName> qnames = new ArrayList<QName>();
+    private ArrayList<QName> namespaces = new ArrayList<QName>();
+    private String inline = null;
     private String sourceType;
 
     public IOSource(String sourceType) {
@@ -24,6 +27,8 @@ public class IOSource {
         }
     }
 
+    public IOSource() {}
+
     public void addQName(QName qname) {
         this.qnames.add(qname);
     }
@@ -32,19 +37,85 @@ public class IOSource {
         return this.qnames;
     }
 
+    public void setSourceType(String sourceType) {
+        this.sourceType = sourceType;
+    }
+
+    public void setParent(GProcXPort parent) {
+        this.parent = parent;
+    }
+
+    public GProcXPort getParent() {
+        return parent;
+    }
+
+    public boolean hasDefineNS(QName ns) {
+        if (this.getParent() != null) {
+            if (this.getParent().hasDefineNS(ns)) {
+                return true;
+            }
+            for (QName namespace : this.getParent().getNamespaces()) {
+                if (namespace.getLexical().equals(ns.getLexical())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public ArrayList<QName> getNamespaces() {
+        return namespaces;
+    }
+
+    public void addNamespace(QName ns) {
+        this.namespaces.add(ns);
+    }
+
+    public void setInline(String inline) {
+        this.inline = inline;
+    }
+
+    public String getInline() {
+        return inline;
+    }
+
     public String getSourceType() {
         return this.sourceType;
     }
 
-    public String toString() {
+    public String toString(int retract) {
         String code = "";
-        code += "<" + this.sourceType;
-        for (QName qname : qnames) {
+        for (int i = 0; i < retract; i++) {
+            code += "    ";
+        }
+        code += "<" + this.getSourceType();
+
+        for (QName namespace : this.getNamespaces()) {
+            if (!hasDefineNS(namespace)) {
+                if (!namespace.getValue().equals("")) {
+                    code += " " + namespace;
+                }
+            }
+        }
+        for (QName qname : getQNames()) {
             if (!qname.getValue().equals("")) {
                 code += " " + qname.toString();
             }
         }
-        code += "/>\n";
+
+        if (this.getSourceType().equals("p:inline")) {
+            code += ">\n";
+            for (int i = 0; i < retract + 1; i++) {
+                code += "    ";
+            }
+            code += this.getInline() + "\n";
+            for (int i = 0; i < retract; i++) {
+                code += "    ";
+            }
+            code += "</p:inline>\n";
+        } else {
+            code += "/>\n";
+        }
         return code;
     }
 }

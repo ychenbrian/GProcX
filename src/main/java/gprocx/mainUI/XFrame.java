@@ -1,6 +1,7 @@
 package gprocx.mainUI;
 
-import gprocx.step.Pipeline;
+import com.xml_project.morganaxproc.XProcInterfaceException;
+import gprocx.step.GProcXPipeline;
 import gprocx.step.StepInfo;
 
 import javax.swing.*;
@@ -14,8 +15,9 @@ public class XFrame {
     private XFigureTabs figureTabs;
     private XConfigTabs configTabs;
     private XToolbar toolbar;
-    private Pipeline selectedPipeline;
-    private String newStep;
+    private GProcXPipeline mainPipeline = null;
+    private GProcXPipeline selectedPipeline = null;
+    private String newStep = "p:error";
 
     //
     private String[] atomicTypes;
@@ -29,7 +31,7 @@ public class XFrame {
     private JTextArea code;
 
     // constructor
-    public XFrame() {
+    public XFrame() throws XProcInterfaceException {
 
         // setting of the frame
     	this.frame = new JFrame("GProcX - A GUI Tool For XProc");  ////////////////////
@@ -43,7 +45,7 @@ public class XFrame {
         this.toolbar = new XToolbar(this);
         this.frame.getContentPane().add(this.toolbar, BorderLayout.PAGE_START);
 
-        this.code = new JTextArea("Test code");
+        this.code = new JTextArea("EmbeddedTest code");
         //this.code.setLineWrap(true);
 
         // set the configuration tabs on the left, more details in mainUI.XConfigTabs
@@ -51,8 +53,8 @@ public class XFrame {
         this.frame.getContentPane().add(this.configTabs, BorderLayout.WEST);
 
         // set init selected pipeline
-        this.selectedPipeline = new Pipeline(this, "p:declare-step");
-        this.newStep = "p:error";
+        this.selectedPipeline = new GProcXPipeline(this, "p:declare-step");
+        this.mainPipeline = this.selectedPipeline;
 
         // set the menu bar, more details in mainUI.XMenuBar
         this.frame.setJMenuBar(new XMenuBar(this));
@@ -62,7 +64,7 @@ public class XFrame {
         codePanel.add(this.code);
 
         // tab
-        this.figureTabs = new XFigureTabs(JTabbedPane.TOP, this);
+        this.figureTabs = new XFigureTabs(JTabbedPane.TOP, this, this.mainPipeline);
 
         this.splitPane = new JSplitPane();
         this.splitPane.setLeftComponent(this.figureTabs);
@@ -70,7 +72,7 @@ public class XFrame {
 
         this.splitPane.setOneTouchExpandable(true);
         this.splitPane.setContinuousLayout(true);
-        this.splitPane.setDividerLocation(Toolkit.getDefaultToolkit().getScreenSize().width*6/10);
+        this.splitPane.setDividerLocation(Toolkit.getDefaultToolkit().getScreenSize().width/2);
 
         this.frame.getContentPane().add(this.splitPane);
         this.updateInfo();
@@ -80,8 +82,20 @@ public class XFrame {
     public void updateInfo() {
         //this.figureTabs.updateInfo();
         this.configTabs.updateInfo();
+        if (this.mainPipeline != null) {
+            this.mainPipeline.updateInfo();
+        }
         if (this.selectedPipeline != null) {
-            this.setCode(this.selectedPipeline.toString());
+            this.setCode(this.selectedPipeline.toString(0));
+        }
+    }
+
+    public void updateSequence() {
+        if (this.mainPipeline != null) {
+            this.mainPipeline.updateInfo();
+        }
+        if (this.selectedPipeline != null) {
+            this.setCode(this.selectedPipeline.toString(0));
         }
     }
 
@@ -102,6 +116,14 @@ public class XFrame {
 
     public void setNewStep(String newStep) {
         this.newStep = newStep;
+    }
+
+    public void setMainPipeline(GProcXPipeline mainPipeline) {
+        this.mainPipeline = mainPipeline;
+        this.setSelectedPipeline(this.mainPipeline);
+
+        this.figureTabs.addPipeline(mainPipeline);
+        this.figureTabs.openTab(mainPipeline.getUUID());
     }
 
     public String getNewStep() {
@@ -136,16 +158,16 @@ public class XFrame {
         return this.code.getText();
     }
 
-    public Pipeline getSelectedPipeline() {
+    public GProcXPipeline getSelectedPipeline() {
         return selectedPipeline;
     }
 
-    public void setSelectedPipeline(Pipeline selectedPipeline) {
+    public void setSelectedPipeline(GProcXPipeline selectedPipeline) {
         this.selectedPipeline = selectedPipeline;
         updateInfo();
     }
 
-    public void addPipeline(Pipeline pipeline) {
+    public void addPipeline(GProcXPipeline pipeline) {
         this.figureTabs.addPipeline(pipeline);
         this.selectedPipeline = pipeline;
     }
@@ -158,7 +180,7 @@ public class XFrame {
         this.figureTabs.removeCurrentTab();
     }
 
-    public Pipeline getCurrentPipeline() {
+    public GProcXPipeline getCurrentPipeline() {
         return this.figureTabs.getCurrentStep();
     }
 }

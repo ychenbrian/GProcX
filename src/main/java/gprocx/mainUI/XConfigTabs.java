@@ -1,7 +1,7 @@
 package gprocx.mainUI;
 
 import gprocx.core.*;
-import gprocx.step.Pipeline;
+import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -53,7 +53,7 @@ public class XConfigTabs extends JTabbedPane {
         // two child panels of the specific panel
         JPanel basicPanel = new JPanel();
         basicPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
-                Toolkit.getDefaultToolkit().getScreenSize().height/10));
+                Toolkit.getDefaultToolkit().getScreenSize().height/5));
         this.elementPanel = new JPanel();
         this.elementPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
@@ -69,14 +69,14 @@ public class XConfigTabs extends JTabbedPane {
         //JComboBox<String> comboBox = new JComboBox<String>(listData);
 
         this.enterType = new JLabel("p:declare-step");
-        JButton typeButton = new JButton("Edit");
+        //JButton typeButton = new JButton("Edit");
 
         Box hBox01 = Box.createHorizontalBox();
         hBox01.add(new JLabel("Type:\t"));
         hBox01.add(Box.createHorizontalStrut(10));
         hBox01.add(this.enterType);
-        hBox01.add(Box.createHorizontalStrut(10));
-        hBox01.add(typeButton);
+        //hBox01.add(Box.createHorizontalStrut(10));
+        //hBox01.add(typeButton);
 
         Box vBox01 = Box.createVerticalBox();
         vBox01.add(hBox01);
@@ -84,11 +84,40 @@ public class XConfigTabs extends JTabbedPane {
 
         this.document = new JTextArea();
         this.document.setLineWrap(true);
-        this.document.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/10,
-                Toolkit.getDefaultToolkit().getScreenSize().height/5));
+        this.document.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/6,
+                Toolkit.getDefaultToolkit().getScreenSize().height/6));
         this.document.setEditable(false);
         this.document.setBackground(null);
         vBox01.add(this.document);
+
+        // edit document button
+        JButton docEditButton = new JButton("Edit");
+        docEditButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (frame.getSelectedPipeline() != null) {
+                    if (frame.getSelectedPipeline().isAtomic()) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "You cannot edit the documentation of a build-in step.",
+                                "Warning",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                    } else {
+                        String inputContent = JOptionPane.showInputDialog(
+                                null,
+                                "Documentation",
+                                frame.getSelectedPipeline().getDocumentation()
+                        );
+                        if (inputContent != null) {
+                            frame.getSelectedPipeline().setDocumentation(inputContent);
+                            frame.updateInfo();
+                        }
+                    }
+                }
+            }
+        });
+        vBox01.add(docEditButton);
+
         basicPanel.add(vBox01);
 
 
@@ -129,29 +158,29 @@ public class XConfigTabs extends JTabbedPane {
 
     public void updateInfo() {
         if (this.frame.getSelectedPipeline() != null) {
-            Pipeline selected = this.frame.getSelectedPipeline();
+            GProcXPipeline selected = this.frame.getSelectedPipeline();
 
             this.enterType.setText(selected.getType());
             this.document.setText(selected.getDocumentation());
 
             this.elementBox.clear();
-            for (QName qname : this.frame.getSelectedPipeline().getQName()) {
-                this.elementBox.add(this.newElementBox(this.frame.getSelectedPipeline().getQName(), qname));
+            for (QName qname : this.frame.getSelectedPipeline().getQNames()) {
+                this.elementBox.add(this.newElementBox(this.frame.getSelectedPipeline().getQNames(), qname));
             }
             this.elementPanel.removeAll();
             for (Box hBox : this.elementBox) {
                 this.elementPanel.add(hBox, BorderLayout.WEST);
             }
 
-            JButton addElementButtion = new JButton("Add");
-            addElementButtion.addActionListener(new AddElementListener());
-            this.elementPanel.add(addElementButtion, BorderLayout.SOUTH);
+            JButton addElementButton = new JButton("Add");
+            addElementButton.addActionListener(new AddElementListener());
+            this.elementPanel.add(addElementButton, BorderLayout.SOUTH);
 
 
 
             this.inputPanel.removeAll();
             this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
-            for (Port port : this.frame.getSelectedPipeline().getInputs()) {
+            for (GProcXPort port : this.frame.getSelectedPipeline().getInputs()) {
                 this.inputPanel.add(this.newInBox01(port));
                 this.inputPanel.add(this.newInBox02(port));
                 this.inputPanel.add(this.newInBox03(port));
@@ -180,7 +209,7 @@ public class XConfigTabs extends JTabbedPane {
 
             this.outputPanel.removeAll();
             this.outputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
-            for (Port port : this.frame.getSelectedPipeline().getOutputs()) {
+            for (GProcXPort port : this.frame.getSelectedPipeline().getOutputs()) {
                 this.outputPanel.add(this.newOutBox01(port));
                 this.outputPanel.add(this.newInBox02(port));
                 this.outputPanel.add(this.newInBox03(port));
@@ -225,7 +254,7 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
-    private Box newInBox01(Port port) {
+    private Box newInBox01(GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
         newBox.add(Box.createHorizontalStrut(10));
@@ -238,7 +267,7 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
-    private Box newOutBox01(Port port) {
+    private Box newOutBox01(GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
         newBox.add(Box.createHorizontalStrut(10));
@@ -251,7 +280,7 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
-    private Box newInBox02(final Port port) {
+    private Box newInBox02(final GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
         JRadioButton trueButton = new JRadioButton("True");
@@ -259,16 +288,28 @@ public class XConfigTabs extends JTabbedPane {
         ButtonGroup primaryGroup = new ButtonGroup();
         primaryGroup.add(trueButton);
         primaryGroup.add(falseButton);
-        trueButton.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                port.setPrimary(true);
-            }
-        });
-        falseButton.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                port.setPrimary(false);
-            }
-        });
+
+        if (!frame.getSelectedPipeline().isAtomic()) {
+            trueButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setPrimary(true);
+                }
+            });
+            falseButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setPrimary(false);
+                }
+            });
+        }
+
+        // update the status
+        if (port.isPrimary()) {
+            trueButton.setSelected(true);
+            falseButton.setSelected(false);
+        } else {
+            trueButton.setSelected(false);
+            falseButton.setSelected(true);
+        }
 
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new JLabel("Primary"));
@@ -280,7 +321,7 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
-    private Box newInBox03(final Port port) {
+    private Box newInBox03(final GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
         JRadioButton trueButton = new JRadioButton("True");
@@ -288,16 +329,28 @@ public class XConfigTabs extends JTabbedPane {
         ButtonGroup primaryGroup = new ButtonGroup();
         primaryGroup.add(trueButton);
         primaryGroup.add(falseButton);
-        trueButton.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                port.setSequence(true);
-            }
-        });
-        falseButton.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                port.setSequence(false);
-            }
-        });
+
+        if (!frame.getSelectedPipeline().isAtomic()) {
+            trueButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setSequence(true);
+                }
+            });
+            falseButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setSequence(false);
+                }
+            });
+        }
+
+        // update the selection status
+        if (port.isSequence()) {
+            trueButton.setSelected(true);
+            falseButton.setSelected(false);
+        } else {
+            trueButton.setSelected(false);
+            falseButton.setSelected(true);
+        }
 
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new JLabel("Sequence"));
@@ -369,7 +422,7 @@ public class XConfigTabs extends JTabbedPane {
 
     private class DeleteSourceButton extends JButton {
 
-        public DeleteSourceButton(final Port port, final IOSource source, String text) {
+        public DeleteSourceButton(final GProcXPort port, final IOSource source, String text) {
             super(text);
 
             this.addActionListener(new ActionListener() {
@@ -393,7 +446,7 @@ public class XConfigTabs extends JTabbedPane {
 
     private class DeleteInPortButton extends JButton {
 
-        public DeleteInPortButton(final Port port, String text) {
+        public DeleteInPortButton(final GProcXPort port, String text) {
             super(text);
 
             this.addActionListener(new ActionListener() {
@@ -431,7 +484,7 @@ public class XConfigTabs extends JTabbedPane {
 
     private class DeleteOutPortButton extends JButton {
 
-        public DeleteOutPortButton(final Port port, String text) {
+        public DeleteOutPortButton(final GProcXPort port, String text) {
             super(text);
 
             this.addActionListener(new ActionListener() {
@@ -468,7 +521,7 @@ public class XConfigTabs extends JTabbedPane {
 
     private class AddSourceButton extends JButton {
 
-        public AddSourceButton(final Port port, String text) {
+        public AddSourceButton(final GProcXPort port, String text) {
             super(text);
 
             final Object[] selectionValues = new Object[]{"p:document", "p:data", "p:inline", "p:empty"};
@@ -542,7 +595,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().getInputs().add(new InPort(inputContent, false, false, "not specified"));
+                        frame.getSelectedPipeline().getInputs().add(new InPort(frame.getSelectedPipeline(), inputContent, false, false, "not specified"));
                         frame.updateInfo();
                     }
                 }
@@ -570,7 +623,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().getOutputs().add(new InPort(inputContent, false, false, "not specified"));
+                        frame.getSelectedPipeline().getOutputs().add(new InPort(frame.getSelectedPipeline(), inputContent, false, false, "not specified"));
                         frame.updateInfo();
                     }
                 }

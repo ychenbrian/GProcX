@@ -1,22 +1,42 @@
 package gprocx;
 
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JTextArea;
-import gprocx.mainUI.XFrame;
+import javax.xml.transform.sax.SAXSource;
 
+import org.xml.sax.InputSource;
+
+import com.xml_project.morganaxproc.XProcCompiler;
+import com.xml_project.morganaxproc.XProcEngine;
+import com.xml_project.morganaxproc.XProcInterfaceException;
+import com.xml_project.morganaxproc.XProcOutput;
+import com.xml_project.morganaxproc.XProcPipeline;
+import com.xml_project.morganaxproc.XProcResult;
+import com.xml_project.morganaxproc.XProcSource;
+import com.xml_project.morganaxproc.filesystem.XProcFilesystem;
+import com.xml_project.morganaxproc.security.XProcSecurityException;
+
+import gprocx.mainUI.XFrame;
+import net.sf.saxon.s9api.DocumentBuilder;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XdmNode;
 import ro.sync.exml.plugin.workspace.WorkspaceAccessPluginExtension;
 import ro.sync.exml.workspace.api.editor.WSEditor;
 import ro.sync.exml.workspace.api.standalone.StandalonePluginWorkspace;
 import ro.sync.exml.workspace.api.standalone.ToolbarComponentsCustomizer;
 import ro.sync.exml.workspace.api.standalone.ToolbarInfo;
 import ro.sync.exml.workspace.api.standalone.ui.ToolbarButton;
-
 
 /**
  * Plugin extension - workspace access extension.
@@ -27,11 +47,43 @@ public class GProcXPluginExtension implements WorkspaceAccessPluginExtension {
    * The custom messages area. A sample component added to your custom view.
    */
   private JTextArea customMessagesArea;
-
+  
   /**
    * @see ro.sync.exml.plugin.workspace.WorkspaceAccessPluginExtension#applicationStarted(ro.sync.exml.workspace.api.standalone.StandalonePluginWorkspace)
    */
   public void applicationStarted(final StandalonePluginWorkspace pluginWorkspaceAccess) {
+	  
+      
+	  String pipeline_xml = "<p:declare-step xmlns:p=\"http://www.w3.org/ns/xproc\" version=\"1.0\"\n" +
+              "                xmlns:c=\"http://www.w3.org/ns/xproc-step\"\n" +
+              "                xmlns:cx=\"http://xmlcalabash.com/ns/extensions\"\n" +
+              "                xmlns:exf=\"http://exproc.org/standard/functions\"\n" +
+              "                exclude-inline-prefixes=\"cx exf\"\n" +
+              "                name=\"main\">\n" +
+              "<p:input port=\"source\"/>\n" +
+              "<p:output port=\"result\"/>\n" +
+              "\n" +
+              "<p:identity>\n" +
+              "  <p:input port=\"source\">\n" +
+              "    <p:inline><doc/></p:inline>\n" +
+              "  </p:input>\n" +
+              "</p:identity>\n" +
+              "\n" +
+              "</p:declare-step>\n";
+      
+	  
+	  
+	  
+	  
+
+
+      //InputStream stream = new ByteArrayInputStream(pipeline_xml.getBytes());
+      //DocumentBuilder builder = saxon.newDocumentBuilder();
+      //XdmNode pipeline_doc = builder.build(new SAXSource(new InputSource(stream)));
+
+      //XPipeline pipeline = runtime.use(pipeline_doc);
+      
+      
 	  //You can set or read global options.
 	  //The "ro.sync.exml.options.APIAccessibleOptionTags" contains all accessible keys.
 	  //		  pluginWorkspaceAccess.setGlobalObjectProperty("can.edit.read.only.files", Boolean.FALSE);
@@ -90,9 +142,14 @@ public class GProcXPluginExtension implements WorkspaceAccessPluginExtension {
 				  // The action is available only in Author mode.
 				  if(editorAccess != null){
 
+                      try {
 						new XFrame();
+					} catch (XProcInterfaceException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
-				  }
+                  }
 			}
 		};
 		

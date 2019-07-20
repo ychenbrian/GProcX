@@ -1,6 +1,6 @@
 package gprocx.mainUI;
 
-import gprocx.step.Pipeline;
+import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -12,13 +12,13 @@ public class XFigureTabs extends JTabbedPane {
     private ArrayList<XPanel> panels;
     private ArrayList<XPanel> tabs;
 
-    public XFigureTabs(int location, XFrame frame) {
+    public XFigureTabs(int location, XFrame frame, GProcXPipeline mainPipeline) {
         super(location);
         this.frame = frame;
         this.panels = new ArrayList<XPanel>();
         this.tabs = new ArrayList<XPanel>();
 
-        Pipeline initPipeline = this.frame.getSelectedPipeline();
+        GProcXPipeline initPipeline = mainPipeline;
         this.addPipeline(initPipeline);
         this.openTab(initPipeline.getUUID());
         //this.addMouseListener(new MouseHandler());
@@ -28,8 +28,19 @@ public class XFigureTabs extends JTabbedPane {
         this.getCurrentTab().updateInfo();
     }
 
-    public void addPipeline(Pipeline step) {
-        panels.add(new XPanel(frame, step));
+    public void addPipeline(GProcXPipeline pipeline) {
+        panels.add(new XPanel(frame, pipeline));
+    }
+
+    public void newProgram(GProcXPipeline pipeline) {
+        this.panels.clear();
+        for (int i = 0; i < tabs.size(); i++) {
+            this.removeCurrentTab();
+        }
+        this.tabs.clear();
+
+        this.addPipeline(pipeline);
+        this.openTab(pipeline.getUUID());
     }
 
     public int findTab(UUID uuid) {
@@ -80,7 +91,7 @@ public class XFigureTabs extends JTabbedPane {
         return this.tabs.get(this.getSelectedIndex());
     }
 
-    public Pipeline getCurrentStep() {
+    public GProcXPipeline getCurrentStep() {
         return this.tabs.get(this.getSelectedIndex()).getMainPipeline();
     }
 }

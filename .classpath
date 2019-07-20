@@ -8,9 +8,9 @@
 	</classpathentry>
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>
+			<attribute name="test" value="true"/>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
@@ -23,5 +23,43 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/ant-1.9.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/ant-launcher-1.9.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/classindex-3.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/commonmark-0.12.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/commons-codec-1.9.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/commons-fileupload-1.3.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/commons-io-2.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/hamcrest-core-1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/htmlparser-1.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/httpclient-4.5.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/httpcore-4.4.5.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/icu4j-49.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/isorelax-20030108.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/isorelax-20090621.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/javax.servlet-api-3.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/jcl-over-slf4j-1.7.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/jing-20181222.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/junit-4.12.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/log4j-api-2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/log4j-core-2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/log4j-slf4j-impl-2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/msv-core-2013.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/nwalsh-annotations-1.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/org.restlet.ext.fileupload-2.2.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/org.restlet.ext.slf4j-2.2.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/org.restlet-2.2.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/relaxngDatatype-20020414.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/Saxon-HE-9.8.0-14.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/slf4j-api-1.7.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/tagsoup-1.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xercesImpl-2.9.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xml-apis-1.4.01.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xmlcalabash-1.1.24-98.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xmlresolver-0.13.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xsdlib-2013.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/MorganaXProc.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ychenbrian/OneDrive/Master/Studying/GProcX/lib/xmlcalabash-1.1.19-96.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
