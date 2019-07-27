@@ -1,6 +1,5 @@
 package gprocx.step;
 
-//import com.sun.org.apache.xerces.internal.impl.xpath.XPath;
 import com.xml_project.morganaxproc.XProcInterfaceException;
 import gprocx.core.*;
 import gprocx.mainUI.XFrame;
@@ -23,7 +22,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     private String documentation;
     private ArrayList<GProcXPort> inputs = new ArrayList<GProcXPort>();
     private ArrayList<GProcXPort> outputs = new ArrayList<GProcXPort>();
-    private ArrayList<GProcXOption> options = new ArrayList<GProcXOption>();
 
     private GProcXPipeline parent = null;
     private ArrayList<GProcXPipeline> children = new ArrayList<GProcXPipeline>();
@@ -52,7 +50,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
         this.inputs = new ArrayList<GProcXPort>();
         this.outputs = new ArrayList<GProcXPort>();
-        this.options = new ArrayList<GProcXOption>();
 
         this.setPipeline();
     }
@@ -73,17 +70,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         this.uuid = UUID.randomUUID();
     }
 
-    public void setPipeline() throws XProcInterfaceException {
+    public void setPipeline() {
 
         StepInfo.setPipelineInfo(this);
-
-        this.qnames.add(new QName("", "name", ""));
-        this.qnames.add(new QName("", "use-when", ""));
-        this.qnames.add(new QName("", "xml:id", ""));
-        this.qnames.add(new QName("", "xml:base", ""));
-        for (GProcXOption option : this.getOptions()) {
-            this.qnames.add(new QName("", option.getName(), option.getSelect()));
-        }
 
         this.frame.updateInfo();
     }
@@ -117,6 +106,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             if (i == 0) {
                 GProcXPipe pipe = getDefaultInPipe(this.getChildren().get(0));
                 if (pipe == null) {
+
                     continue;
                 }
                 pipe.setFromPipeline(this, true);
@@ -168,10 +158,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     public GProcXPipeline getParent() {
         return parent;
-    }
-
-    public ArrayList<GProcXOption> getOptions() {
-        return options;
     }
 
     public ArrayList<GProcXPort> getInputs() {
@@ -258,7 +244,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     }
 
     public void addOption(GProcXOption option) {
-        this.options.add(option);
+        QName newQ = new QName("", option.getName(), option.getSelect());
+        newQ.setRequired(option.isRequired());
+        this.addQName(newQ);
     }
 
     public void addOutput(GProcXPort output) {
@@ -370,6 +358,28 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         return false;
     }
 
+    public void deleteChild(GProcXPipeline child) {
+        ArrayList<GProcXPipe> pipeWL = new ArrayList<GProcXPipe>();
+
+        for (GProcXPipe pipe : this.getPipes()) {
+            if (pipe.getFromPipeline().getUUID() == child.getUUID()) {
+                pipe.setFromPipeline(null, false);
+                pipe.setFromPort(null);
+            }
+            if (pipe.getToPipeline().getUUID() == child.getUUID()) {
+                pipeWL.add(pipe);
+            }
+        }
+        for (GProcXPipe pipe : pipeWL) {
+            this.getPipes().remove(pipe);
+        }
+        if (this.outPipe.getFromPipeline().getUUID() == child.getUUID()) {
+            this.outPipe = null;
+        }
+
+        this.getChildren().remove(child);
+    }
+
     public void addQName(QName q) {
         this.qnames.add(q);
     }
@@ -473,13 +483,20 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     }
 
     public void drawSelf(Graphics2D g2, FontMetrics metrics) {
-        g2.draw(shape);
-
         //Font sansbold14 = new Font("SansSerif", Font.BOLD, 24);
         int xText = this.x - metrics.stringWidth(this.getType()) / 2;
         int yText = this.y - metrics.getHeight() / 2 + metrics.getAscent();
 
-        g2.drawString(this.getType(), xText, yText);
+        if (frame.getSelectedPipeline().getUUID() == this.getUUID()) {
+            g2.setColor(new Color(255,0,0));
+            g2.draw(shape);
+            g2.drawString(this.getType(), xText, yText);
+            g2.setColor(new Color(0,0,0));
+        } else {
+            //g2.setColor(new Color(0,0,0));
+            g2.draw(shape);
+            g2.drawString(this.getType(), xText, yText);
+        }
     }
 
     public void drawChildren(Graphics2D g2, FontMetrics metrics) {
@@ -492,8 +509,10 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         for (GProcXPipe pipe : pipes) {
             pipe.draw(g2);
         }
-        if (this.outPipe.isValid()) {
-            this.outPipe.draw(g2);
+        if (this.outPipe != null) {
+            if (this.outPipe.isValid()) {
+                this.outPipe.draw(g2);
+            }
         }
     }
 

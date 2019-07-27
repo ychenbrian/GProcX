@@ -68,22 +68,34 @@ public class XFigureTabs extends JTabbedPane {
         if (index >= 0) {   // if already exist the tab
             this.setSelectedIndex(index);
             this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
             this.frame.updateInfo();
         } else {
             this.addTab(uuid);
             this.setSelectedIndex(this.getTabCount() - 1);
             this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
             this.frame.updateInfo();
         }
     }
 
     public void removeCurrentTab() {
+        if (this.tabs.size() == 1) {
+            JOptionPane.showMessageDialog(
+                    null,
+                    "You cannot close the last tab.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
         int index = this.getSelectedIndex();
         this.remove(index);
         this.tabs.remove(index);
 
         this.setSelectedIndex(0);
         this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
+        this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
         this.frame.updateInfo();
     }
 

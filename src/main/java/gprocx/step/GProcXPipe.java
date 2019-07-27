@@ -67,7 +67,6 @@ public class GProcXPipe {
 
         // draw the line
         if (this.isDefault()) {
-            g2.setColor(new Color(0,0,0));
             g2.drawLine(startX, startY, endX, endY);
         } else {
             g2.setColor(new Color(255,0,0));

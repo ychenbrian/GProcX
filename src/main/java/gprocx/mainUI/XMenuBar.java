@@ -13,7 +13,6 @@ import nu.xom.ParsingException;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -27,7 +26,8 @@ public class XMenuBar extends JMenuBar {
 
         JMenu fileMenu = new JMenu("File");
         JMenuItem newMenuItem = new JMenuItem("New"); fileMenu.add(newMenuItem);
-        JMenuItem openMenuItem = new JMenuItem("Open"); fileMenu.add(openMenuItem);
+        //JMenuItem openMenuItem = new JMenuItem("Open"); fileMenu.add(openMenuItem);
+        //JMenuItem saveMenuItem = new JMenuItem("Save"); fileMenu.add(saveMenuItem);
         fileMenu.addSeparator();
         JMenuItem importMenuItem = new JMenuItem("Import"); fileMenu.add(importMenuItem);
         JMenuItem exportMenuItem = new JMenuItem("Export"); fileMenu.add(exportMenuItem);
@@ -41,10 +41,11 @@ public class XMenuBar extends JMenuBar {
         JMenuItem atomicMenuItem = new JMenuItem("Atomic step"); insertMenu.add(atomicMenuItem);
         JMenuItem pipeMenuItem = new JMenuItem("GProcXPipe"); insertMenu.add(pipeMenuItem);
 
+        newMenuItem.addActionListener(new NewMenu());
         importMenuItem.addActionListener(new ImportMenu());
         exportMenuItem.addActionListener(new ExportMenu());
-        atomicMenuItem.addActionListener(new AtomicMenu());
-        pipeMenuItem.addActionListener(new PipeMenu());
+        atomicMenuItem.addActionListener(new AtomicMenu(this.frame));
+        pipeMenuItem.addActionListener(new PipeMenu(this.frame));
 
         this.add(fileMenu);
         this.add(editMenu);
@@ -93,6 +94,33 @@ public class XMenuBar extends JMenuBar {
         return null;
     }
 
+    private class NewMenu implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            final Object[] selectionValues = new Object[]{"p:declare-step", "p:pipeline"};
+
+            Object inputContent = JOptionPane.showInputDialog(
+                    null,
+                    "Please select the type of source:",
+                    "Source",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    selectionValues,
+                    selectionValues[0]
+            );
+
+            if (inputContent != null) {
+                GProcXPipeline newPipeline = new GProcXPipeline(frame);
+
+                newPipeline.setType((String)inputContent);
+                newPipeline.setIsAtomic(false);
+                StepInfo.setPipelineInfo(newPipeline);
+
+                frame.addMainPipeline(newPipeline);
+            }
+        }
+    }
+
     private class ImportMenu implements ActionListener {
 
         String test2 = "<p:declare-step xmlns:p=\"http://www.w3.org/ns/xproc\" xmlns:c=\"http://www.w3.org/ns/xproc-step\" name=\"myPipeline\" version=\"1.0\">" +
@@ -118,20 +146,10 @@ public class XMenuBar extends JMenuBar {
                 docs = parser.build(file);
                 //docs = parser.build(new StringReader(test2));
             } catch (ParsingException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             }
 
@@ -142,44 +160,19 @@ public class XMenuBar extends JMenuBar {
                 XProcSource pipelineSource = new XProcSource(docs);
                 pipeline = compiler.compile(pipelineSource);
             } catch (XProcInterfaceException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             } catch (XProcSecurityException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             } catch (XProcFilesystem.UnsupportedXMLVersionException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             } catch (XProcCompiler.XProcCompilerException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                showMessage(e.getMessage());
                 return;
             }
 
@@ -187,7 +180,7 @@ public class XMenuBar extends JMenuBar {
             GProcXPipeline newPipeline = new GProcXPipeline(frame);
             GProcXProcessor.setPipeline(null, newPipeline, mainEle);
 
-            frame.setMainPipeline(newPipeline);
+            frame.addMainPipeline(newPipeline);
         }
     }
 
@@ -208,8 +201,14 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
-    private class AtomicMenu implements ActionListener {
-    	
+    public static class AtomicMenu implements ActionListener {
+
+        XFrame frame;
+
+        public AtomicMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
     	public void actionPerformed(ActionEvent e) {
             Object[] selectionValues = StepInfo.getStepTypes();
 
@@ -230,13 +229,33 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
-    private class PipeMenu implements ActionListener {
+    public static class PipeMenu implements ActionListener {
+
+        XFrame frame;
+
+        public PipeMenu(XFrame frame) {
+            this.frame = frame;
+        }
 
         public void actionPerformed(ActionEvent e) {
             frame.setDrawPipe01Active(true);
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Select the FROM step or port.",
+                    "Information",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
         }
     }
 
-
+    private void showMessage(String message) {
+        JOptionPane.showMessageDialog(
+                null,
+                message,
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
 
 }

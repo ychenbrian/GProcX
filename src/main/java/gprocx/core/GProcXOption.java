@@ -1,8 +1,5 @@
 package gprocx.core;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 public class GProcXOption {
 
     private String name;

@@ -12,7 +12,7 @@ public class XToolbar extends JToolBar {
         this.frame = frame;
 
         JButton newButton = new JButton("+");
-        JButton closeButton = new JButton("x");
+        JButton closeButton = new JButton("Close current tab");
 
         closeButton.addActionListener(new CloseActionListener());
 

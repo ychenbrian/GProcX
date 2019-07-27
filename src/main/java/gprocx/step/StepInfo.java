@@ -1,13 +1,6 @@
 package gprocx.step;
 
-import com.xml_project.morganaxproc.XProcInterfaceException;
-import gprocx.core.GProcXOption;
-import gprocx.core.GProcXProcessor;
-import gprocx.core.InPort;
-import gprocx.core.OutPort;
-import gprocx.mainUI.XFrame;
-import net.sf.saxon.s9api.SaxonApiException;
-import org.w3c.dom.Node;
+import gprocx.core.*;
 
 public class StepInfo {
 
@@ -372,7 +365,15 @@ public class StepInfo {
             pipeline.addOutput(new OutPort(pipeline, "result", false, false, "document"));
             pipeline.addOption(new GProcXOption("href", "", true));
             pipeline.addOption(new GProcXOption("content-type", "", false));
+        } else {
+            pipeline.addInput(new InPort(pipeline, "source", true, false, "document"));
+            pipeline.addOutput(new OutPort(pipeline, "result", true, false, "document"));
         }
+
+        pipeline.addQName(new QName("", "name", ""));
+        pipeline.addQName(new QName("", "use-when", ""));
+        pipeline.addQName(new QName("", "xml:id", ""));
+        pipeline.addQName(new QName("", "xml:base", ""));
     }
 
     public static String[] getStepTypes() {

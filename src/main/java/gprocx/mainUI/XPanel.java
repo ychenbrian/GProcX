@@ -6,9 +6,7 @@ import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.UUID;
 
@@ -111,7 +109,6 @@ public class XPanel extends JPanel {
                 frame.setDrawStepActive(false);
                 frame.setSelectedPipeline(current);
                 existCurrent = true;
-                repaint();
             } else if (frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
                 GProcXPipeline selected = findPipeline(event.getPoint());
 
@@ -190,8 +187,6 @@ public class XPanel extends JPanel {
                     mainPipeline.addPipe(newPipe);
                     frame.setDrawPipe02Active(false);
 
-                    repaint();
-
                 } else if (selected != null) {
 
                     newPipe.setToPipeline(selected, false);
@@ -216,10 +211,9 @@ public class XPanel extends JPanel {
                     mainPipeline.addPipe(newPipe);
                     frame.setDrawPipe02Active(false);
 
-                    repaint();
                 }
             }
-
+            repaint();
         }
 
         public void mouseClicked(MouseEvent event) {
@@ -235,10 +229,32 @@ public class XPanel extends JPanel {
                     frame.setSelectedPipeline(selected);
                     frame.updateInfo();
                 } else if (event.getClickCount() == 2) {
-                    frame.openTab(selected.getUUID());
+                    if (selected.isAtomic()) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "This is an atomic step.",
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                    } else {
+                        frame.openTab(selected.getUUID());
+                    }
                 }
             }
+            repaint();
         }
+
+        public void mouseReleased(MouseEvent e) {
+            if (e.isMetaDown()) {
+                if (findPipeline(e.getPoint()) != null) {
+                    stepPopMenu(e.getComponent(), e.getPoint());
+                } else {
+                    generalPopMenu(e.getComponent(), e.getPoint());
+                }
+            }
+            repaint();
+        }
+
     }
 
     private class MouseMotionHandler implements MouseMotionListener {
@@ -296,9 +312,8 @@ public class XPanel extends JPanel {
                         (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 18);
                 frame.updateSequence();
 
-                repaint();
             }
-
+            repaint();
         }
 
         public void mouseDragged(MouseEvent event) {
@@ -308,11 +323,74 @@ public class XPanel extends JPanel {
                     // drag the current rectangle to center it at (x, y)
                     current.setShape(event.getX() - xDiff, event.getY() - yDiff, current.getW(), current.getH());
                     mainPipeline.updatePipes();
+                    if (frame.getSelectedPipeline().getUUID() != current.getUUID()) {
+                        frame.setSelectedPipeline(current);
+                    }
+
                     frame.updateSequence();
-                    repaint();
+
                 }
             }
 
+            repaint();
+        }
+    }
+
+    public void stepPopMenu(Component invoker, Point2D p) {
+
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem deleteMenuItem = new JMenuItem("Delete");
+
+        popupMenu.add(deleteMenuItem);
+
+        deleteMenuItem.addActionListener(new DeletePopMenu(findPipeline(p)));
+
+        popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
+    }
+
+    public void generalPopMenu(Component invoker, Point2D p) {
+
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenu addMenu = new JMenu("Add");
+        JMenuItem atomicMenuItem = new JMenuItem("Atomic step");
+        JMenuItem pipeMenuItem = new JMenuItem("Pipe");
+        addMenu.add(atomicMenuItem);
+        addMenu.add(pipeMenuItem);
+
+        JMenuItem closeMenuItem = new JMenuItem("Close");
+
+        popupMenu.add(addMenu);
+        popupMenu.add(closeMenuItem);
+
+        atomicMenuItem.addActionListener(new XMenuBar.AtomicMenu(this.frame));
+        pipeMenuItem.addActionListener(new XMenuBar.PipeMenu(this.frame));
+        closeMenuItem.addActionListener(new ClosePopMenu());
+
+        popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
+    }
+
+    private class DeletePopMenu implements ActionListener {
+
+        GProcXPipeline select;
+
+        public DeletePopMenu(GProcXPipeline select) {
+            this.select = select;
+        }
+        public void actionPerformed(ActionEvent e) {
+            if (select != null) {
+                mainPipeline.deleteChild(select);
+            }
+            repaint();
+            frame.setSelectedPipeline(frame.getMainPipeline());
+            frame.updateInfo();
+        }
+    }
+
+    private class ClosePopMenu implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            frame.removeCurrentTab();
+            frame.setSelectedPipeline(frame.getCurrentPipeline());
         }
     }
 }

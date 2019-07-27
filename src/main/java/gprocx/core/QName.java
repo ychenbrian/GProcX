@@ -5,6 +5,7 @@ public class QName {
     private String uri = "";
     private String lexical = "";
     private String value = "";
+    private boolean isRequired = false;
 
     public QName(QName qname) {
         this.uri = qname.uri;
@@ -68,6 +69,14 @@ public class QName {
 
     public String getValue() {
         return value;
+    }
+
+    public boolean isRequired() {
+        return isRequired;
+    }
+
+    public void setRequired(boolean required) {
+        isRequired = required;
     }
 
     public String toString() {

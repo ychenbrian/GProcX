@@ -84,18 +84,15 @@ public class XFrame {
         this.configTabs.updateInfo();
         if (this.mainPipeline != null) {
             this.mainPipeline.updateInfo();
-        }
-        if (this.selectedPipeline != null) {
-            this.setCode(this.selectedPipeline.toString(0));
+            this.setCode(this.mainPipeline.toString(0));
         }
     }
 
+    // update the sequence of pipelines only
     public void updateSequence() {
         if (this.mainPipeline != null) {
             this.mainPipeline.updateInfo();
-        }
-        if (this.selectedPipeline != null) {
-            this.setCode(this.selectedPipeline.toString(0));
+            this.setCode(this.mainPipeline.toString(0));
         }
     }
 
@@ -118,7 +115,7 @@ public class XFrame {
         this.newStep = newStep;
     }
 
-    public void setMainPipeline(GProcXPipeline mainPipeline) {
+    public void addMainPipeline(GProcXPipeline mainPipeline) {
         this.mainPipeline = mainPipeline;
         this.setSelectedPipeline(this.mainPipeline);
 
@@ -126,8 +123,16 @@ public class XFrame {
         this.figureTabs.openTab(mainPipeline.getUUID());
     }
 
+    public void setMainPipeline(GProcXPipeline mainPipeline) {
+        this.mainPipeline = mainPipeline;
+    }
+
     public String getNewStep() {
         return newStep;
+    }
+
+    public GProcXPipeline getMainPipeline() {
+        return mainPipeline;
     }
 
     public void setDrawPipe01Active(boolean drawPipe01Active) {
