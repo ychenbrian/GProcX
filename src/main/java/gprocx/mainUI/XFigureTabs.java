@@ -3,6 +3,8 @@ package gprocx.mainUI;
 import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -21,6 +23,8 @@ public class XFigureTabs extends JTabbedPane {
         GProcXPipeline initPipeline = mainPipeline;
         this.addPipeline(initPipeline);
         this.openTab(initPipeline.getUUID());
+
+        this.addChangeListener(new ChangeTab());
         //this.addMouseListener(new MouseHandler());
     }
 
@@ -81,19 +85,14 @@ public class XFigureTabs extends JTabbedPane {
 
     public void removeCurrentTab() {
         if (this.tabs.size() == 1) {
-            JOptionPane.showMessageDialog(
-                    null,
-                    "You cannot close the last tab.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            frame.showErrorMessage("You cannot close the last tab.");
             return;
         }
         int index = this.getSelectedIndex();
         this.remove(index);
         this.tabs.remove(index);
 
-        this.setSelectedIndex(0);
+        this.setSelectedIndex(this.getTabCount() - 1);
         this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
         this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
         this.frame.updateInfo();
@@ -105,5 +104,12 @@ public class XFigureTabs extends JTabbedPane {
 
     public GProcXPipeline getCurrentStep() {
         return this.tabs.get(this.getSelectedIndex()).getMainPipeline();
+    }
+
+    private class ChangeTab implements ChangeListener {
+
+        public void stateChanged(ChangeEvent e) {
+            frame.setMainPipeline(tabs.get(getSelectedIndex()).getMainPipeline());
+        }
     }
 }

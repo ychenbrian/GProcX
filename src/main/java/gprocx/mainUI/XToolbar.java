@@ -14,16 +14,21 @@ public class XToolbar extends JToolBar {
         JButton newButton = new JButton("+");
         JButton closeButton = new JButton("Close current tab");
 
-        closeButton.addActionListener(new CloseActionListener());
+        closeButton.addActionListener(new CloseActionListener(this.frame));
 
         this.add(newButton);
         this.add(closeButton);
     }
     
-    private class CloseActionListener implements ActionListener {
+    public static class CloseActionListener implements ActionListener {
+        XFrame frame;
+
+        public CloseActionListener(XFrame frame) {
+            this.frame = frame;
+        }
     	public void actionPerformed(ActionEvent e) {
-            frame.removeCurrentTab();
-            frame.setSelectedPipeline(frame.getCurrentPipeline());
+            this.frame.removeCurrentTab();
+            this.frame.setSelectedPipeline(this.frame.getCurrentPipeline());
         }
     }
 }

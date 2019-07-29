@@ -1,5 +1,6 @@
 package gprocx.core;
 
+import gprocx.mainUI.XFrame;
 import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
 import gprocx.step.StepInfo;
@@ -11,10 +12,9 @@ import java.util.ArrayList;
 
 public class GProcXProcessor {
 
-    public static void setPipeline(GProcXPipeline parent, GProcXPipeline pipeline, Element pipelineEle) {
+    public static void setPipeline(XFrame frame, GProcXPipeline parent, GProcXPipeline pipeline, Element pipelineEle) {
         pipeline.setType(pipelineEle.getQualifiedName());
-        pipeline.setIsAtomic(StepInfo.isAtomic(pipeline.getType()));
-        StepInfo.setPipelineInfo(pipeline);
+        StepInfo.setPipelineInfo(frame, pipeline);
         for (QName qname : getQNames(pipelineEle)) {
             pipeline.addQName(new QName(qname));
         }
@@ -43,6 +43,12 @@ public class GProcXProcessor {
         }
         for (Element childEle : childEles) {
             if (!childEle.getQualifiedName().equals("p:input") && !childEle.getQualifiedName().equals("p:output")) {
+
+                if (childEle.getQualifiedName().equals("p:documentation")) {
+                    pipeline.setDocumentation(childEle.getChild(0).toXML());
+                    continue;
+                }
+
                 GProcXPipeline newPipeline = new GProcXPipeline(pipeline.getFrame());
                 y += 2*h;
                 x += 15;
@@ -52,7 +58,8 @@ public class GProcXProcessor {
                 }
                 newPipeline.setShape(x, y, w, h);
 
-                setPipeline(pipeline, newPipeline, childEle);
+                setPipeline(frame, pipeline, newPipeline, childEle);
+                frame.addPipeline(newPipeline);
                 pipeline.addChildren(newPipeline);
             }
         }

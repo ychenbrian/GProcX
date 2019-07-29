@@ -112,7 +112,7 @@ public class XPanel extends JPanel {
             } else if (frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
                 GProcXPipeline selected = findPipeline(event.getPoint());
 
-                // if select the main inport of the parent
+                // if select the main in port of the parent
                 if (selected == null && selectInPort(event.getPoint())) {
                     newPipe = new GProcXPipe(frame);
                     newPipe.setFromPipeline(mainPipeline, true);
@@ -145,25 +145,30 @@ public class XPanel extends JPanel {
                         selectionValues[i] = selected.getOutputs().get(i).getPort();
                     }
 
-                    Object inputContent = JOptionPane.showInputDialog(
-                            null,
-                            "Please select the port:",
-                            "GProcXPort",
-                            JOptionPane.PLAIN_MESSAGE,
-                            null,
-                            selectionValues,
-                            selectionValues[0]
-                    );
+                    if (selectionValues.length == 0) {
+                        frame.showErrorMessage("Cannot find available ports, fail to draw the pipe.");
+                        frame.setDrawPipe01Active(false);
+                    } else {
+                        Object inputContent = JOptionPane.showInputDialog(
+                                null,
+                                "Please select the port:",
+                                "GProcXPort",
+                                JOptionPane.PLAIN_MESSAGE,
+                                null,
+                                selectionValues,
+                                selectionValues[0]
+                        );
 
-                    newPipe.setFromPort(selected.findOutPort((String) inputContent));
+                        newPipe.setFromPort(selected.findOutPort((String) inputContent));
 
-                    frame.setDrawPipe01Active(false);
-                    frame.setDrawPipe02Active(true);
+                        frame.setDrawPipe01Active(false);
+                        frame.setDrawPipe02Active(true);
+                    }
                 }
             } else if (!frame.isDrawPipe01Active() && frame.isDrawPipe02Active()) {
                 GProcXPipeline selected = findPipeline(event.getPoint());
 
-                // if select the main outport of the parent
+                // if select the main out port of the parent
                 if (selected == null && selectOutPort(event.getPoint())) {
                     newPipe.setToPipeline(mainPipeline, true);
 
@@ -196,21 +201,25 @@ public class XPanel extends JPanel {
                         selectionValues[i] = selected.getInputs().get(i).getPort();
                     }
 
-                    Object inputContent = JOptionPane.showInputDialog(
-                            null,
-                            "Please select the port:",
-                            "GProcXPort",
-                            JOptionPane.PLAIN_MESSAGE,
-                            null,
-                            selectionValues,
-                            selectionValues[0]
-                    );
+                    if (selectionValues.length == 0) {
+                        frame.showErrorMessage("Cannot find available ports, fail to draw the pipe.");
+                        frame.setDrawPipe02Active(false);
+                    } else {
+                        Object inputContent = JOptionPane.showInputDialog(
+                                null,
+                                "Please select the port:",
+                                "GProcXPort",
+                                JOptionPane.PLAIN_MESSAGE,
+                                null,
+                                selectionValues,
+                                selectionValues[0]
+                        );
 
-                    newPipe.setToPort(selected.findInPort((String) inputContent));
-                    newPipe.setDefault(false);
-                    mainPipeline.addPipe(newPipe);
-                    frame.setDrawPipe02Active(false);
-
+                        newPipe.setToPort(selected.findInPort((String) inputContent));
+                        newPipe.setDefault(false);
+                        mainPipeline.addPipe(newPipe);
+                        frame.setDrawPipe02Active(false);
+                    }
                 }
             }
             repaint();
@@ -230,12 +239,7 @@ public class XPanel extends JPanel {
                     frame.updateInfo();
                 } else if (event.getClickCount() == 2) {
                     if (selected.isAtomic()) {
-                        JOptionPane.showMessageDialog(
-                                null,
-                                "This is an atomic step.",
-                                "Error",
-                                JOptionPane.ERROR_MESSAGE
-                        );
+                        frame.showErrorMessage("This is an atomic step.");
                     } else {
                         frame.openTab(selected.getUUID());
                     }
@@ -357,14 +361,14 @@ public class XPanel extends JPanel {
         addMenu.add(atomicMenuItem);
         addMenu.add(pipeMenuItem);
 
-        JMenuItem closeMenuItem = new JMenuItem("Close");
+        JMenuItem closeMenuItem = new JMenuItem("Close tab");
 
         popupMenu.add(addMenu);
         popupMenu.add(closeMenuItem);
 
         atomicMenuItem.addActionListener(new XMenuBar.AtomicMenu(this.frame));
         pipeMenuItem.addActionListener(new XMenuBar.PipeMenu(this.frame));
-        closeMenuItem.addActionListener(new ClosePopMenu());
+        closeMenuItem.addActionListener(new XToolbar.CloseActionListener(this.frame));
 
         popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
     }
@@ -383,14 +387,6 @@ public class XPanel extends JPanel {
             repaint();
             frame.setSelectedPipeline(frame.getMainPipeline());
             frame.updateInfo();
-        }
-    }
-
-    private class ClosePopMenu implements ActionListener {
-
-        public void actionPerformed(ActionEvent e) {
-            frame.removeCurrentTab();
-            frame.setSelectedPipeline(frame.getCurrentPipeline());
         }
     }
 }

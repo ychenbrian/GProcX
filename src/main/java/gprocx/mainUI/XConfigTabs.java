@@ -1,6 +1,7 @@
 package gprocx.mainUI;
 
 import gprocx.core.*;
+import gprocx.step.GProcXDoc;
 import gprocx.step.GProcXPipeline;
 
 import javax.swing.*;
@@ -19,7 +20,9 @@ public class XConfigTabs extends JTabbedPane {
     // variables for specification panel
     private JLabel enterType;
     private JTextArea document;
+    private ArrayList<Box> docBox;
     private ArrayList<Box> elementBox;
+    private JPanel basicPanel;
     private JPanel elementPanel;
     private JPanel inputPanel;
     private JPanel outputPanel;
@@ -51,8 +54,8 @@ public class XConfigTabs extends JTabbedPane {
 
 
         // two child panels of the specific panel
-        JPanel basicPanel = new JPanel();
-        basicPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+        this.basicPanel = new JPanel();
+        this.basicPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/5));
         this.elementPanel = new JPanel();
         this.elementPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
@@ -61,71 +64,17 @@ public class XConfigTabs extends JTabbedPane {
 
         TitledBorder basicInfo = new TitledBorder("Basic information");
         TitledBorder elementInfo = new TitledBorder("Elements");
-        basicPanel.setBorder(basicInfo);
+        this.basicPanel.setBorder(basicInfo);
         this.elementPanel.setBorder(elementInfo);
 
-
-        //String[] listData = this.frame.getAtomicTypes();
-        //JComboBox<String> comboBox = new JComboBox<String>(listData);
-
         this.enterType = new JLabel("p:declare-step");
-        //JButton typeButton = new JButton("Edit");
-
-        Box hBox01 = Box.createHorizontalBox();
-        hBox01.add(new JLabel("Type:\t"));
-        hBox01.add(Box.createHorizontalStrut(10));
-        hBox01.add(this.enterType);
-        //hBox01.add(Box.createHorizontalStrut(10));
-        //hBox01.add(typeButton);
-
-        Box vBox01 = Box.createVerticalBox();
-        vBox01.add(hBox01);
-        vBox01.add(Box.createVerticalStrut(20));
-
-        this.document = new JTextArea();
-        this.document.setLineWrap(true);
-        this.document.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/6,
-                Toolkit.getDefaultToolkit().getScreenSize().height/6));
-        this.document.setEditable(false);
-        this.document.setBackground(null);
-        vBox01.add(this.document);
-
-        // edit document button
-        JButton docEditButton = new JButton("Edit");
-        docEditButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (frame.getSelectedPipeline() != null) {
-                    if (frame.getSelectedPipeline().isAtomic()) {
-                        JOptionPane.showMessageDialog(
-                                null,
-                                "You cannot edit the documentation of a build-in step.",
-                                "Warning",
-                                JOptionPane.WARNING_MESSAGE
-                        );
-                    } else {
-                        String inputContent = JOptionPane.showInputDialog(
-                                null,
-                                "Documentation",
-                                frame.getSelectedPipeline().getDocumentation()
-                        );
-                        if (inputContent != null) {
-                            frame.getSelectedPipeline().setDocumentation(inputContent);
-                            frame.updateInfo();
-                        }
-                    }
-                }
-            }
-        });
-        vBox01.add(docEditButton);
-
-        basicPanel.add(vBox01);
-
+        this.basicPanel.setLayout(new GridLayout(10,1));
+        this.docBox = new ArrayList<Box>();
 
         this.elementPanel.setLayout(new GridLayout(30,1));
         this.elementBox = new ArrayList<Box>();
 
-
-        this.specPanel.add(basicPanel);
+        this.specPanel.add(this.basicPanel);
         this.specPanel.add(this.elementPanel);
     }
 
@@ -161,8 +110,26 @@ public class XConfigTabs extends JTabbedPane {
             GProcXPipeline selected = this.frame.getSelectedPipeline();
 
             this.enterType.setText(selected.getType());
-            this.document.setText(selected.getDocumentation());
 
+            // set docs
+            this.basicPanel.removeAll();
+            for (GProcXDoc doc : this.frame.getSelectedPipeline().getDocs()) {
+                this.basicPanel.add(this.newDocBox(this.frame.getSelectedPipeline().getDocs(), doc), BorderLayout.WEST);
+                JLabel tempDoc = new JLabel(doc.getContent());
+                tempDoc.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                        Toolkit.getDefaultToolkit().getScreenSize().height/5));
+                this.basicPanel.add(tempDoc);
+
+                this.basicPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+            }
+            JButton addDocButtion = new JButton("New info");
+            addDocButtion.addActionListener(new AddDocListener());
+            this.basicPanel.add(addDocButtion, BorderLayout.SOUTH);
+
+
+
+
+            // set qnames
             this.elementBox.clear();
             for (QName qname : this.frame.getSelectedPipeline().getQNames()) {
                 this.elementBox.add(this.newElementBox(this.frame.getSelectedPipeline().getQNames(), qname));
@@ -177,7 +144,7 @@ public class XConfigTabs extends JTabbedPane {
             this.elementPanel.add(addElementButton, BorderLayout.SOUTH);
 
 
-
+            // set inputs
             this.inputPanel.removeAll();
             this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
             for (GProcXPort port : this.frame.getSelectedPipeline().getInputs()) {
@@ -243,6 +210,16 @@ public class XConfigTabs extends JTabbedPane {
         }
     }
 
+    private Box newDocBox(ArrayList<GProcXDoc> docs, GProcXDoc doc) {
+        Box newBox = Box.createHorizontalBox();
+        newBox.add(new EditDocButton(doc, "Edit"), BorderLayout.WEST);
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new DeleteDocButton(docs, doc, "Delete"));
+        newBox.add(Box.createHorizontalStrut(30));
+        newBox.add(new JLabel(doc.getType()));
+        return newBox;
+    }
+
     private Box newElementBox(ArrayList<QName> qnames, QName qname) {
         Box newBox = Box.createHorizontalBox();
         newBox.add(Box.createHorizontalStrut(10));
@@ -271,8 +248,6 @@ public class XConfigTabs extends JTabbedPane {
         Box newBox = Box.createHorizontalBox();
 
         newBox.add(Box.createHorizontalStrut(10));
-        //newBox.add(new AddSourceButton(port,"Insert source"));
-        //newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteOutPortButton(port,"Delete port"));
         newBox.add(Box.createHorizontalStrut(30));
         newBox.add(new JLabel(port.getPort()));
@@ -362,6 +337,27 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
+    private class EditDocButton extends JButton {
+        public EditDocButton(final GProcXDoc doc, String text) {
+            super(text);
+
+            this.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    String inputContent = JOptionPane.showInputDialog(
+                            null,
+                            doc.getType(),
+                            doc.getContent()
+                    );
+                    if (inputContent != null) {
+                        doc.setContent(inputContent);
+                        frame.updateInfo();
+                    }
+                }
+            });
+        }
+    }
+
     private class EditElementButton extends JButton {
 
         public EditElementButton(final QName qname, String text) {
@@ -373,11 +369,40 @@ public class XConfigTabs extends JTabbedPane {
                     String inputContent = JOptionPane.showInputDialog(
                             null,
                             qname.getUriLexical() + "=",
-                            ""
+                            qname.getValue()
                     );
                     if (inputContent != null) {
                         qname.setValue(inputContent);
                         frame.updateInfo();
+                    }
+                }
+            });
+        }
+    }
+
+    private class DeleteDocButton extends JButton {
+        public DeleteDocButton(final ArrayList<GProcXDoc> docs, final GProcXDoc doc, String text) {
+            super(text);
+
+            this.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    if (frame.getSelectedPipeline() != null) {
+                        if (frame.getSelectedPipeline().isBuildin()) {
+                            frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
+                        } else {
+                            int result = JOptionPane.showConfirmDialog(
+                                    null,
+                                    "Remove this doc?",
+                                    "Warning",
+                                    JOptionPane.YES_NO_CANCEL_OPTION
+                            );
+
+                            if (result == 0) {
+                                docs.remove(doc);
+                                frame.updateInfo();
+                            }
+                        }
                     }
                 }
             });
@@ -394,13 +419,8 @@ public class XConfigTabs extends JTabbedPane {
                 public void actionPerformed(ActionEvent e) {
 
                     if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isAtomic()) {
-                            JOptionPane.showMessageDialog(
-                                    null,
-                                    "You cannot delete a build-in QName of a atomic step.",
-                                    "Warning",
-                                    JOptionPane.WARNING_MESSAGE
-                            );
+                        if (frame.getSelectedPipeline().isBuildin()) {
+                            frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
                                     null,
@@ -454,13 +474,8 @@ public class XConfigTabs extends JTabbedPane {
                 public void actionPerformed(ActionEvent e) {
 
                     if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isAtomic()) {
-                            JOptionPane.showMessageDialog(
-                                    null,
-                                    "You cannot delete a build-in port of a atomic step.",
-                                    "Warning",
-                                    JOptionPane.WARNING_MESSAGE
-                            );
+                        if (frame.getSelectedPipeline().isBuildin()) {
+                            frame.showWarningMessage("You cannot delete a port of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
                                     null,
@@ -481,7 +496,6 @@ public class XConfigTabs extends JTabbedPane {
         }
     }
 
-
     private class DeleteOutPortButton extends JButton {
 
         public DeleteOutPortButton(final GProcXPort port, String text) {
@@ -492,13 +506,8 @@ public class XConfigTabs extends JTabbedPane {
                 public void actionPerformed(ActionEvent e) {
 
                     if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isAtomic()) {
-                            JOptionPane.showMessageDialog(
-                                    null,
-                                    "You cannot delete a build-in port of a atomic step.",
-                                    "Warning",
-                                    JOptionPane.WARNING_MESSAGE
-                            );
+                        if (frame.getSelectedPipeline().isBuildin()) {
+                            frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
                                     null,
@@ -547,18 +556,35 @@ public class XConfigTabs extends JTabbedPane {
         }
     }
 
+    private class AddDocListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            if (frame.getSelectedPipeline() != null) {
+
+                if (frame.getSelectedPipeline().isBuildin()) {
+                    frame.showWarningMessage("You cannot add a user-defined info to a build-in step.");
+                } else {
+                    String inputContent = JOptionPane.showInputDialog(
+                            null,
+                            "Please enter the type:",
+                            "p:documentation"
+                    );
+
+                    if (inputContent != null) {
+                        frame.getSelectedPipeline().addDoc(new GProcXDoc(inputContent, "empty"));
+                        frame.updateInfo();
+                    }
+                }
+            }
+        }
+    }
+
     private class AddElementListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
             if (frame.getSelectedPipeline() != null) {
 
-                if (frame.getSelectedPipeline().isAtomic()) {
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "You cannot add a user-defined QName to a atomic step.",
-                            "Warning",
-                            JOptionPane.WARNING_MESSAGE
-                    );
+                if (frame.getSelectedPipeline().isBuildin()) {
+                    frame.showWarningMessage("You cannot add a user-defined QName to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
                             null,
@@ -580,13 +606,8 @@ public class XConfigTabs extends JTabbedPane {
         public void actionPerformed(ActionEvent e) {
             if (frame.getSelectedPipeline() != null) {
 
-                if (frame.getSelectedPipeline().isAtomic()) {
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "You cannot add a user-defined port to a atomic step.",
-                            "Warning",
-                            JOptionPane.WARNING_MESSAGE
-                    );
+                if (frame.getSelectedPipeline().isBuildin()) {
+                    frame.showWarningMessage("You cannot add a user-defined port to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
                             null,
@@ -608,13 +629,8 @@ public class XConfigTabs extends JTabbedPane {
         public void actionPerformed(ActionEvent e) {
             if (frame.getSelectedPipeline() != null) {
 
-                if (frame.getSelectedPipeline().isAtomic()) {
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "You cannot add a user-defined port to a atomic step.",
-                            "Warning",
-                            JOptionPane.WARNING_MESSAGE
-                    );
+                if (frame.getSelectedPipeline().isBuildin()) {
+                    frame.showWarningMessage("You cannot add a user-defined port to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
                             null,

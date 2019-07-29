@@ -73,12 +73,7 @@ public class XMenuBar extends JMenuBar {
 
     private File showFileSaveDialog() {
 
-        JOptionPane.showMessageDialog(
-                null,
-                "You are going to save the code displayed in the code window.",
-                "Save",
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        frame.showInformationMessage("You are going to save the current pipeline.");
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setSelectedFile(new File("untitled.xpl"));
@@ -97,7 +92,7 @@ public class XMenuBar extends JMenuBar {
     private class NewMenu implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            final Object[] selectionValues = new Object[]{"p:declare-step", "p:pipeline"};
+            final Object[] selectionValues = new Object[]{"p:declare-step", "p:pipeline", "p:library"};
 
             Object inputContent = JOptionPane.showInputDialog(
                     null,
@@ -113,8 +108,7 @@ public class XMenuBar extends JMenuBar {
                 GProcXPipeline newPipeline = new GProcXPipeline(frame);
 
                 newPipeline.setType((String)inputContent);
-                newPipeline.setIsAtomic(false);
-                StepInfo.setPipelineInfo(newPipeline);
+                StepInfo.setPipelineInfo(frame, newPipeline);
 
                 frame.addMainPipeline(newPipeline);
             }
@@ -146,10 +140,10 @@ public class XMenuBar extends JMenuBar {
                 docs = parser.build(file);
                 //docs = parser.build(new StringReader(test2));
             } catch (ParsingException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             } catch (IOException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             }
 
@@ -160,25 +154,28 @@ public class XMenuBar extends JMenuBar {
                 XProcSource pipelineSource = new XProcSource(docs);
                 pipeline = compiler.compile(pipelineSource);
             } catch (XProcInterfaceException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             } catch (XProcSecurityException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             } catch (XProcFilesystem.UnsupportedXMLVersionException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             } catch (IOException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
                 return;
             } catch (XProcCompiler.XProcCompilerException e) {
-                showMessage(e.getMessage());
+                frame.showErrorMessage(e.getMessage());
+                return;
+            } catch (NullPointerException e) {
+                frame.showErrorMessage("This is not a runnable XProc program.");
                 return;
             }
 
             Element mainEle = (Element) docs.getChild(0);
             GProcXPipeline newPipeline = new GProcXPipeline(frame);
-            GProcXProcessor.setPipeline(null, newPipeline, mainEle);
+            GProcXProcessor.setPipeline(frame, null, newPipeline, mainEle);
 
             frame.addMainPipeline(newPipeline);
         }
@@ -210,6 +207,11 @@ public class XMenuBar extends JMenuBar {
         }
 
     	public void actionPerformed(ActionEvent e) {
+
+            if (frame.getMainPipeline().getType().equals("p:library")) {
+                XFrame.showErrorMessage("You cannot insert steps into p:library.");
+                return;
+            }
             Object[] selectionValues = StepInfo.getStepTypes();
 
             Object inputContent = JOptionPane.showInputDialog(
@@ -238,24 +240,13 @@ public class XMenuBar extends JMenuBar {
         }
 
         public void actionPerformed(ActionEvent e) {
+            if (frame.getMainPipeline().getType().equals("p:library")) {
+                XFrame.showErrorMessage("You cannot insert pips into p:library.");
+                return;
+            }
             frame.setDrawPipe01Active(true);
-
-            JOptionPane.showMessageDialog(
-                    null,
-                    "Select the FROM step or port.",
-                    "Information",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+            frame.showInformationMessage("Select the FROM step or port.");
         }
-    }
-
-    private void showMessage(String message) {
-        JOptionPane.showMessageDialog(
-                null,
-                message,
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-        );
     }
 
 }

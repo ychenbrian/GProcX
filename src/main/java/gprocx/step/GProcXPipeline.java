@@ -19,37 +19,31 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     // variables for the pipeline
     private QName type;
-    private String documentation;
+    private String documentation = "";
     private ArrayList<GProcXPort> inputs = new ArrayList<GProcXPort>();
     private ArrayList<GProcXPort> outputs = new ArrayList<GProcXPort>();
 
     private GProcXPipeline parent = null;
     private ArrayList<GProcXPipeline> children = new ArrayList<GProcXPipeline>();
+    private ArrayList<GProcXDoc> docs = new ArrayList<GProcXDoc>();
     private ArrayList<QName> qnames = new ArrayList<QName>();
     private ArrayList<QName> namespaces = new ArrayList<QName>();
     private ArrayList<GProcXPipe> pipes = new ArrayList<GProcXPipe>();
     private GProcXPipe outPipe;
     private boolean isAtomic = true;
-    private UUID uuid;
+    private boolean isBuildin = true;
+    private UUID uuid = null;
 
     // variables for drawing
     private RoundRectangle2D.Double shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
     private int x, y, w, h;
-    private Rectangle2D inShape;
-    private Rectangle2D outShape;
 
     public GProcXPipeline(XFrame frame, String type) throws XProcInterfaceException {
         this.frame = frame;
 
         this.shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
-        this.qnames = new ArrayList<QName>();
-        this.children = new ArrayList<GProcXPipeline>();
-        this.pipes = new ArrayList<GProcXPipe>();
         this.type = new QName(type);
         this.uuid = UUID.randomUUID();
-
-        this.inputs = new ArrayList<GProcXPort>();
-        this.outputs = new ArrayList<GProcXPort>();
 
         this.setPipeline();
     }
@@ -61,7 +55,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         this.type = new QName(element.getQualifiedName());
         this.uuid = UUID.randomUUID();
 
-
         this.setPipeline();
     }
 
@@ -72,17 +65,16 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     public void setPipeline() {
 
-        StepInfo.setPipelineInfo(this);
-
+        StepInfo.setPipelineInfo(this.frame, this);
         this.frame.updateInfo();
     }
 
-    public void setIsAtomic(boolean atomic) {
+    public void setAtomic(boolean atomic) {
         isAtomic = atomic;
     }
 
     public boolean isAtomic() {
-        return StepInfo.isAtomic(this.getType());
+        return this.isAtomic;
     }
 
     public boolean isBrief() {
@@ -106,7 +98,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             if (i == 0) {
                 GProcXPipe pipe = getDefaultInPipe(this.getChildren().get(0));
                 if (pipe == null) {
-
+                    continue;
+                }
+                if (getPrimaryInport(this) == null) {
                     continue;
                 }
                 pipe.setFromPipeline(this, true);
@@ -116,20 +110,29 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
                 if (pipe == null) {
                     continue;
                 }
+                if (getPrimaryOutport(this.getChildren().get(i - 1)) == null) {
+                    continue;
+                }
                 pipe.setFromPipeline(this.getChildren().get(i - 1), false);
                 pipe.setFromPort(getPrimaryOutport(this.getChildren().get(i - 1)));
             }
         }
 
         if (this.outPipe == null) {
-            this.outPipe = new GProcXPipe(this.frame);
-            this.outPipe.setDefault(true);
-            this.outPipe.setToPipeline(this, true);
-            this.outPipe.setToPort(getPrimaryOutport(this));
+            if (getPrimaryOutport(this) != null) {
+                this.outPipe = new GProcXPipe(this.frame);
+                this.outPipe.setDefault(true);
+                this.outPipe.setToPipeline(this, true);
+                this.outPipe.setToPort(getPrimaryOutport(this));
+            } else {
+                return;
+            }
         }
         if (!this.getChildren().isEmpty()) {
-            this.outPipe.setFromPipeline(this.getChildren().get(this.getChildren().size() - 1), false);
-            this.outPipe.setFromPort(getPrimaryInport(this.getChildren().get(this.getChildren().size() - 1)));
+            if (getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)) != null) {
+                this.outPipe.setFromPipeline(this.getChildren().get(this.getChildren().size() - 1), false);
+                this.outPipe.setFromPort(getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)));
+            }
         }
     }
 
@@ -230,6 +233,18 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     public void setDocumentation(String documentation) {
         this.documentation = documentation;
+
+        // if to change the content of documentation
+        for (GProcXDoc step : this.docs) {
+            if (step.getType().equals("p:documentation")) {
+                step.setContent(documentation);
+                return;
+            }
+        }
+        // if to initialise the documentation
+        GProcXDoc newDoc = new GProcXDoc("p:documentation", "no");
+        newDoc.setContent(documentation);
+        this.docs.add(newDoc);
     }
 
     public void addInput(GProcXPort input) {
@@ -241,6 +256,14 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             }
         }
         this.getInputs().add(input);
+    }
+
+    public ArrayList<GProcXDoc> getDocs() {
+        return docs;
+    }
+
+    public void addDoc(GProcXDoc newDoc) {
+        this.getDocs().add(newDoc);
     }
 
     public void addOption(GProcXOption option) {
@@ -293,7 +316,17 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         }
 
         this.pipes.add(pipe);
-        this.frame.updateInfo();
+        if (this.frame != null) {
+            this.frame.updateInfo();
+        }
+    }
+
+    public boolean isBuildin() {
+        return isBuildin;
+    }
+
+    public void setBuildin(boolean buildin) {
+        isBuildin = buildin;
     }
 
     public String getType() { return type.getUriLexical(); }
@@ -381,11 +414,23 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     }
 
     public void addQName(QName q) {
-        this.qnames.add(q);
+        for (QName qname : this.getQNames()) {
+            if (qname.getUriLexical().equals(q.getUriLexical())) {
+                this.getQNames().remove(qname);
+                break;
+            }
+        }
+        this.getQNames().add(q);
     }
 
-    public void addNamespace(QName ns) {
-        this.namespaces.add(ns);
+    public void addNamespace(QName newNS) {
+        for (QName ns : this.getNamespaces()) {
+            if (ns.getUriLexical().equals(newNS.getUriLexical())) {
+                this.getNamespaces().remove(ns);
+                break;
+            }
+        }
+        this.namespaces.add(newNS);
     }
 
     public ArrayList<QName> getQNames() {
@@ -593,6 +638,13 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
                     code += "/>\n";
         } else {
             code += ">\n";
+
+            if (!this.isBuildin()) {
+                for (GProcXDoc doc : this.docs) {
+                    code += doc.toString(retract + 1);
+                    code += "\n";
+                }
+            }
 
             for (GProcXPort inPort : this.inputs) {
                 code += inPort.toString(retract + 1);

@@ -125,6 +125,7 @@ public class XFrame {
 
     public void setMainPipeline(GProcXPipeline mainPipeline) {
         this.mainPipeline = mainPipeline;
+        this.setSelectedPipeline(mainPipeline);
     }
 
     public String getNewStep() {
@@ -187,5 +188,32 @@ public class XFrame {
 
     public GProcXPipeline getCurrentPipeline() {
         return this.figureTabs.getCurrentStep();
+    }
+
+    public static void showErrorMessage(String info) {
+        JOptionPane.showMessageDialog(
+                null,
+                info,
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
+    public static void showWarningMessage(String info) {
+        JOptionPane.showMessageDialog(
+                null,
+                info,
+                "Warning",
+                JOptionPane.WARNING_MESSAGE
+        );
+    }
+
+    public static void showInformationMessage(String info) {
+        JOptionPane.showMessageDialog(
+                null,
+                info,
+                "Information",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 }
