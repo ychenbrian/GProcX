@@ -73,13 +73,11 @@ public class XFigureTabs extends JTabbedPane {
             this.setSelectedIndex(index);
             this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
             this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
-            this.frame.updateInfo();
         } else {
             this.addTab(uuid);
             this.setSelectedIndex(this.getTabCount() - 1);
             this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
             this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
-            this.frame.updateInfo();
         }
     }
 
@@ -95,7 +93,6 @@ public class XFigureTabs extends JTabbedPane {
         this.setSelectedIndex(this.getTabCount() - 1);
         this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
         this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
-        this.frame.updateInfo();
     }
 
     public XPanel getCurrentTab() {

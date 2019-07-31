@@ -19,7 +19,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     // variables for the pipeline
     private QName type;
-    private String documentation = "";
     private ArrayList<GProcXPort> inputs = new ArrayList<GProcXPort>();
     private ArrayList<GProcXPort> outputs = new ArrayList<GProcXPort>();
 
@@ -32,6 +31,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     private GProcXPipe outPipe;
     private boolean isAtomic = true;
     private boolean isBuildin = true;
+    private boolean outPipeFlag = true;
     private UUID uuid = null;
 
     // variables for drawing
@@ -118,7 +118,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             }
         }
 
-        if (this.outPipe == null) {
+        if (this.outPipe == null && this.outPipeFlag == true) {
             if (getPrimaryOutport(this) != null) {
                 this.outPipe = new GProcXPipe(this.frame);
                 this.outPipe.setDefault(true);
@@ -128,10 +128,12 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
                 return;
             }
         }
-        if (!this.getChildren().isEmpty()) {
-            if (getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)) != null) {
-                this.outPipe.setFromPipeline(this.getChildren().get(this.getChildren().size() - 1), false);
-                this.outPipe.setFromPort(getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)));
+        if (this.outPipe != null) {
+            if (!this.getChildren().isEmpty()) {
+                if (getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)) != null) {
+                    this.outPipe.setFromPipeline(this.getChildren().get(this.getChildren().size() - 1), false);
+                    this.outPipe.setFromPort(getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)));
+                }
             }
         }
     }
@@ -197,10 +199,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         return frame;
     }
 
-    public String getDocumentation() {
-        return documentation;
-    }
-
     public GProcXPipeline findPipeline(String name) {
         if (this.getName().equals(name)) {
             return this;
@@ -231,22 +229,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         this.type = new QName(type);
     }
 
-    public void setDocumentation(String documentation) {
-        this.documentation = documentation;
-
-        // if to change the content of documentation
-        for (GProcXDoc step : this.docs) {
-            if (step.getType().equals("p:documentation")) {
-                step.setContent(documentation);
-                return;
-            }
-        }
-        // if to initialise the documentation
-        GProcXDoc newDoc = new GProcXDoc("p:documentation", "no");
-        newDoc.setContent(documentation);
-        this.docs.add(newDoc);
-    }
-
     public void addInput(GProcXPort input) {
         for (GProcXPort in : this.getInputs()) {
             if (in.getPort().equals(input.getPort())) {
@@ -256,6 +238,18 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             }
         }
         this.getInputs().add(input);
+    }
+
+    public GProcXPipe getOutPipe() {
+        return this.outPipe;
+    }
+
+    public void setOutPipe(GProcXPipe outPipe) {
+        this.outPipe = outPipe;
+    }
+
+    public void setOutPipeFlag(boolean outPipeFlag) {
+        this.outPipeFlag = outPipeFlag;
     }
 
     public ArrayList<GProcXDoc> getDocs() {
@@ -642,7 +636,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             if (!this.isBuildin()) {
                 for (GProcXDoc doc : this.docs) {
                     code += doc.toString(retract + 1);
-                    code += "\n";
                 }
             }
 

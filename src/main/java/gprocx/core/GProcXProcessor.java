@@ -1,6 +1,7 @@
 package gprocx.core;
 
 import gprocx.mainUI.XFrame;
+import gprocx.step.GProcXDoc;
 import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
 import gprocx.step.StepInfo;
@@ -45,7 +46,11 @@ public class GProcXProcessor {
             if (!childEle.getQualifiedName().equals("p:input") && !childEle.getQualifiedName().equals("p:output")) {
 
                 if (childEle.getQualifiedName().equals("p:documentation")) {
-                    pipeline.setDocumentation(childEle.getChild(0).toXML());
+                    pipeline.addDoc(new GProcXDoc("p:documentation", childEle.getChild(0).toXML()));
+                    continue;
+                }
+                if (childEle.getQualifiedName().equals("p:pipeinfo")) {
+                    pipeline.addDoc(new GProcXDoc("p:pipeinfo", childEle.getChild(0).toXML()));
                     continue;
                 }
 

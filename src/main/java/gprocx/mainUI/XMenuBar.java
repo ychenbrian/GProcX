@@ -37,14 +37,17 @@ public class XMenuBar extends JMenuBar {
         JMenu editMenu = new JMenu("Edit");
 
         JMenu insertMenu = new JMenu("Insert");
-        JMenuItem pipelineMenuItem = new JMenuItem("GProcXPipeline"); insertMenu.add(pipelineMenuItem);
+        JMenuItem pipelineMenuItem = new JMenuItem("Pipeline"); insertMenu.add(pipelineMenuItem);
         JMenuItem atomicMenuItem = new JMenuItem("Atomic step"); insertMenu.add(atomicMenuItem);
-        JMenuItem pipeMenuItem = new JMenuItem("GProcXPipe"); insertMenu.add(pipeMenuItem);
+        JMenuItem otherStepMenuItem = new JMenuItem("Other step"); insertMenu.add(otherStepMenuItem);
+        JMenuItem pipeMenuItem = new JMenuItem("Pipe"); insertMenu.add(pipeMenuItem);
 
         newMenuItem.addActionListener(new NewMenu());
         importMenuItem.addActionListener(new ImportMenu());
         exportMenuItem.addActionListener(new ExportMenu());
+        pipelineMenuItem.addActionListener(new PipelineMenu(this.frame));
         atomicMenuItem.addActionListener(new AtomicMenu(this.frame));
+        otherStepMenuItem.addActionListener(new OtherStepMenu(this.frame));
         pipeMenuItem.addActionListener(new PipeMenu(this.frame));
 
         this.add(fileMenu);
@@ -198,6 +201,39 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
+    public static class PipelineMenu implements ActionListener {
+
+        XFrame frame;
+
+        public PipelineMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+
+            if (!frame.getMainPipeline().getType().equals("p:library")) {
+                XFrame.showErrorMessage("You can only insert pipelines into p:library.");
+                return;
+            }
+            Object[] selectionValues = new String[]{"p:declare-step", "p:pipeline"};
+
+            Object inputContent = JOptionPane.showInputDialog(
+                    null,
+                    "Choose the type:",
+                    "Pipeline",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    selectionValues,
+                    selectionValues[0]
+            );
+            if (inputContent != null) {
+                frame.setNewStep((String) inputContent);
+                frame.setDrawStepActive(true);
+            }
+
+        }
+    }
+
     public static class AtomicMenu implements ActionListener {
 
         XFrame frame;
@@ -212,12 +248,45 @@ public class XMenuBar extends JMenuBar {
                 XFrame.showErrorMessage("You cannot insert steps into p:library.");
                 return;
             }
-            Object[] selectionValues = StepInfo.getStepTypes();
+            Object[] selectionValues = StepInfo.getAtomicTypes();
 
             Object inputContent = JOptionPane.showInputDialog(
                     null,
                     "Choose the atomic step:",
-                    "Atomic step",
+                    "Atomic steps",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    selectionValues,
+                    selectionValues[0]
+            );
+            if (inputContent != null) {
+                frame.setNewStep((String) inputContent);
+                frame.setDrawStepActive(true);
+            }
+
+        }
+    }
+
+    public static class OtherStepMenu implements ActionListener {
+
+        XFrame frame;
+
+        public OtherStepMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+
+            if (frame.getMainPipeline().getType().equals("p:library")) {
+                XFrame.showErrorMessage("You cannot insert steps into p:library.");
+                return;
+            }
+            Object[] selectionValues = StepInfo.getOtherTypes();
+
+            Object inputContent = JOptionPane.showInputDialog(
+                    null,
+                    "Choose the step:",
+                    "Other steps",
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     selectionValues,

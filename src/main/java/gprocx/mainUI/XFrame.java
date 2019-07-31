@@ -39,7 +39,7 @@ public class XFrame {
     	this.frame.setVisible(true);
     	this.frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-    	this.atomicTypes = StepInfo.getStepTypes();
+    	this.atomicTypes = StepInfo.getAtomicTypes();
 
     	// toolbar
         this.toolbar = new XToolbar(this);
@@ -171,6 +171,10 @@ public class XFrame {
     public void setSelectedPipeline(GProcXPipeline selectedPipeline) {
         this.selectedPipeline = selectedPipeline;
         updateInfo();
+    }
+
+    public XPanel getCurrentPanel() {
+        return this.figureTabs.getCurrentTab();
     }
 
     public void addPipeline(GProcXPipeline pipeline) {

@@ -258,7 +258,6 @@ public class GProcXPipe {
     }
 
     public String toString(int retract) {
-
         // <p:pipe step="myStep" port="result"/>
         String code = "";
         for (int i = 0; i < retract; i++) {
@@ -283,6 +282,17 @@ public class GProcXPipe {
         }
 
         code += "/>\n";
+
+        return code;
+    }
+
+    public String getInfo() {
+        // From = myStep : source, to = toStep : source
+        String code = "";
+
+        code += "From = " + this.getFromPipeline().getName() + " : ";
+        code += this.getFromPort().getPort() + ", to = ";
+        code += this.getToPipeline().getName() + " : " + this.getToPort().getPort();
 
         return code;
     }

@@ -22,6 +22,7 @@ public class StepInfo {
             pipeline.addOption(new GProcXOption("", "", false));
         }
         */
+        pipeline.addOption(new GProcXOption("name", "", false));
 
         if (type.equals("p:declare-step")) {
             pipeline.addDoc(new GProcXDoc("p:documentation", "empty"));
@@ -29,6 +30,7 @@ public class StepInfo {
             pipeline.setBuildin(false);
             pipeline.addInput(new InPort(pipeline, "source", true, false, "document"));
             pipeline.addOutput(new OutPort(pipeline, "result", true, false, "document"));
+            pipeline.addOption(new GProcXOption("name", "myPipeline", false));
             pipeline.addOption(new GProcXOption("type", "", false));
             pipeline.addOption(new GProcXOption("psvi-required", "", false));
             pipeline.addOption(new GProcXOption("xpath-version", "", false));
@@ -42,6 +44,7 @@ public class StepInfo {
             pipeline.addInput(new InPort(pipeline, "source", true, false, "document"));
             pipeline.addInput(new InPort(pipeline, "parameters", true, false, "parameters"));
             pipeline.addOutput(new OutPort(pipeline, "result", true, false, "document"));
+            pipeline.addOption(new GProcXOption("name", "myPipeline", false));
             pipeline.addOption(new GProcXOption("type", "", false));
             pipeline.addOption(new GProcXOption("psvi-required", "", false));
             pipeline.addOption(new GProcXOption("xpath-version", "", false));
@@ -74,10 +77,51 @@ public class StepInfo {
             pipeline.addDoc(new GProcXDoc("p:documentation", "A choose is specified by the p:choose element. It is a multi-container step that selects exactly one of a list of alternative subpipelines based on the evaluation of XPath expressions."));
             pipeline.setAtomic(false);
             pipeline.setBuildin(true);
-        } else if (type.equals("p:try")) {
-            pipeline.addDoc(new GProcXDoc("p:documentation", "A try/catch is specified by the p:try element. It is a multi-container step that isolates a subpipeline, preventing any dynamic errors that arise within it from being exposed to the rest of the pipeline."));
+        } else if (type.equals("p:when")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A p:when specifies one subpipeline guarded by a test expression. Each p:when branch of the p:choose has a test attribute which must contain an XPath expression. That XPath expression's effective boolean value is the guard for the subpipeline contained within that p:when."));
             pipeline.setAtomic(false);
             pipeline.setBuildin(true);
+            pipeline.addInput(new InPort(pipeline, "xpath-context", true, false, "document"));
+            pipeline.addOption(new GProcXOption("test", "", true));
+        } else if (type.equals("p:otherwise")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A p:otherwise specifies the default branch; the subpipeline selected if no test expression on any preceding p:when evaluates to true."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+        } else if (type.equals("p:group")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "In a p:try, the p:group represents the initial subpipeline. The p:try step evaluates the initial subpipeline and, if no errors occur, the outputs of that pipeline are the outputs of the p:try step."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+        } else if (type.equals("p:catch")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A recovery (or “catch”) pipeline is identified with a p:catch element. If the recovery subpipeline is evaluated, the outputs of the recovery subpipeline are the outputs of the p:try step."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+        } else if (type.equals("p:with-option")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A p:with-option provides an actual value for an option when a step is invoked."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+            pipeline.addOption(new GProcXOption("select", "", true));
+        } else if (type.equals("p:with-param")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "The p:with-param element is used to establish the value of a parameter. The parameter must be given a value when it is used."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+            pipeline.addOption(new GProcXOption("select", "", true));
+            pipeline.addOption(new GProcXOption("port", "", false));
+        } else if (type.equals("p:variable")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A p:variable declares a variable and associates a value with it. The content of the select attribute is an XPath expression which will be evaluated to provide the value of the variable."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+            pipeline.addOption(new GProcXOption("select", "", true));
+        } else if (type.equals("p:import")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "An p:import loads a pipeline or pipeline library, making it available in the pipeline or library which contains the p:import."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+            pipeline.addOption(new GProcXOption("href", "", true));
+        } else if (type.equals("p:option")) {
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A p:option declares an option and may associate a default value with it. The p:option tag can only be used in a p:declare-step or a p:pipeline (which is a syntactic abbreviation for a step declaration)."));
+            pipeline.setAtomic(false);
+            pipeline.setBuildin(true);
+            pipeline.addOption(new GProcXOption("required", "", false));
+            pipeline.addOption(new GProcXOption("select", "", false));
         }
 
 
@@ -428,13 +472,12 @@ public class StepInfo {
             pipeline.addOutput(new OutPort(pipeline, "result", true, false, "document"));
         }
 
-        pipeline.addQName(new QName("", "name", ""));
-        pipeline.addQName(new QName("", "use-when", ""));
-        pipeline.addQName(new QName("", "xml:id", ""));
-        pipeline.addQName(new QName("", "xml:base", ""));
+        pipeline.addOption(new GProcXOption("use-when", "", false));
+        pipeline.addOption(new GProcXOption("xml:id", "", false));
+        pipeline.addOption(new GProcXOption("xml:base", "", false));
     }
 
-    public static String[] getStepTypes() {
+    public static String[] getAtomicTypes() {
 
         String[] types = new String[]{
                 "p:add-attribute",
@@ -479,6 +522,27 @@ public class StepInfo {
                 "p:xsl-formatter"
         };
 
+
+        return types;
+    }
+
+    public static String[] getOtherTypes() {
+        String[] types = new String[]{
+                "p:for-each",
+                "p:viewport",
+                "p:group",
+                "p:choose",
+                "p:try",
+                "p:when",
+                "p:otherwise",
+                "p:group",
+                "p:catch",
+                "p:with-option",
+                "p:with-param",
+                "p:variable",
+                "p:import",
+                "p:option"
+        };
 
         return types;
     }

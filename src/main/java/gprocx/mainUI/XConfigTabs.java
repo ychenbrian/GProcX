@@ -2,10 +2,14 @@ package gprocx.mainUI;
 
 import gprocx.core.*;
 import gprocx.step.GProcXDoc;
+import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
+import javafx.scene.control.TitledPane;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -16,33 +20,31 @@ public class XConfigTabs extends JTabbedPane {
 
     private JPanel specPanel;
     private JPanel ioPanel;
+    private JPanel pipeChildPanel;
 
     // variables for specification panel
-    private JLabel enterType;
-    private JTextArea document;
-    private ArrayList<Box> docBox;
-    private ArrayList<Box> elementBox;
     private JPanel basicPanel;
-    private JPanel elementPanel;
+    private JPanel nsPanel;
+    private JPanel requiredElePanel;
+    private JPanel otherElePanel;
+    // for io panel
     private JPanel inputPanel;
     private JPanel outputPanel;
+    // for pipe child panel
+    private JPanel pipePanel;
+    private JPanel childPanel;
 
-    private final String[] ioPortCol = {"type", "port", "primary", "sequence", "kind"};
-    String[][] ioPortInfo;
-    private final String[] optionCol = {"name", "required", "select"};
-    String[][] optionInfo;
-    JTable optionTable;
 
     public XConfigTabs(XFrame frame) {
         this.frame = frame;
 
-        //this.setTabPlacement(JTabbedPane.LEFT);
-
         setSpecPanel();
         setIOPanel();
+        setPipeChildPanel();
 
         this.addTab("Specification", this.specPanel);
-        this.addTab("Inputs / Outputs", this.ioPanel);
+        this.addTab("I/O ports", this.ioPanel);
+        this.addTab("Pipe & Subpipeline", this.pipeChildPanel);
     }
 
     public void setSpecPanel() {
@@ -53,29 +55,39 @@ public class XConfigTabs extends JTabbedPane {
                 Toolkit.getDefaultToolkit().getScreenSize().height));
 
 
-        // two child panels of the specific panel
+        // information panel
         this.basicPanel = new JPanel();
+        this.basicPanel.setBorder(new TitledBorder("Basic information"));
+        this.basicPanel.setLayout(new GridLayout(10,1));
         this.basicPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/5));
-        this.elementPanel = new JPanel();
-        this.elementPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
-                Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
+        // namespaces
+        this.nsPanel = new JPanel();
+        this.nsPanel.setBorder(new TitledBorder("Namespaces"));
+        this.nsPanel.setLayout(new GridLayout(5,1));
+        this.nsPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height/10));
 
-        TitledBorder basicInfo = new TitledBorder("Basic information");
-        TitledBorder elementInfo = new TitledBorder("Elements");
-        this.basicPanel.setBorder(basicInfo);
-        this.elementPanel.setBorder(elementInfo);
+        // required QNames
+        this.requiredElePanel = new JPanel();
+        this.requiredElePanel.setBorder(new TitledBorder("Required elements"));
+        this.requiredElePanel.setLayout(new GridLayout(5,1));
+        this.requiredElePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height/10));
 
-        this.enterType = new JLabel("p:declare-step");
-        this.basicPanel.setLayout(new GridLayout(10,1));
-        this.docBox = new ArrayList<Box>();
+        // none required QNames
+        this.otherElePanel = new JPanel();
+        this.otherElePanel.setBorder(new TitledBorder("Other elements"));
+        this.otherElePanel.setLayout(new GridLayout(35,1));
+        this.otherElePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height*5/10));
 
-        this.elementPanel.setLayout(new GridLayout(30,1));
-        this.elementBox = new ArrayList<Box>();
 
         this.specPanel.add(this.basicPanel);
-        this.specPanel.add(this.elementPanel);
+        this.specPanel.add(this.nsPanel);
+        this.specPanel.add(this.requiredElePanel);
+        this.specPanel.add(this.otherElePanel);
     }
 
     public void setIOPanel() {
@@ -86,38 +98,57 @@ public class XConfigTabs extends JTabbedPane {
 
         // I/O panels of the specific panel
         this.inputPanel = new JPanel();
+        this.inputPanel.setBorder(new TitledBorder("Input port"));
+        this.inputPanel.setLayout(new GridLayout(30,1));
         this.inputPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
+
         this.outputPanel = new JPanel();
+        this.outputPanel.setBorder(new TitledBorder("Output port"));
+        this.outputPanel.setLayout(new GridLayout(30,1));
         this.outputPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
 
-        TitledBorder inputInfo = new TitledBorder("Input port");
-        TitledBorder outputInfo = new TitledBorder("Output port");
-        this.inputPanel.setBorder(inputInfo);
-        this.outputPanel.setBorder(outputInfo);
+        this.ioPanel.add(this.inputPanel);
+        this.ioPanel.add(this.outputPanel);
+    }
 
-        this.inputPanel.setLayout(new GridLayout(30,1));
-        this.outputPanel.setLayout(new GridLayout(30,1));
+    public void setPipeChildPanel() {
+        this.pipeChildPanel = new JPanel();
+        this.pipeChildPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height));
 
-        this.ioPanel.add(inputPanel);
-        this.ioPanel.add(outputPanel);
+        // panel for pipes
+        this.pipePanel = new JPanel();
+        this.pipePanel.setBorder(new TitledBorder("Pipe"));
+        this.pipePanel.setLayout(new GridLayout(30,1));
+        this.pipePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height/2));
+
+        // panel for subpipelines
+        this.childPanel = new JPanel();
+        this.childPanel.setBorder(new TitledBorder("Subpipeline"));
+        this.childPanel.setLayout(new GridLayout(30,1));
+        this.childPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+                Toolkit.getDefaultToolkit().getScreenSize().height/2));
+
+
+        this.pipeChildPanel.add(this.pipePanel);
+        this.pipeChildPanel.add(this.childPanel);
     }
 
     public void updateInfo() {
         if (this.frame.getSelectedPipeline() != null) {
             GProcXPipeline selected = this.frame.getSelectedPipeline();
 
-            this.enterType.setText(selected.getType());
+            //this.enterType.setText(selected.getType());
 
             // set docs
             this.basicPanel.removeAll();
-            for (GProcXDoc doc : this.frame.getSelectedPipeline().getDocs()) {
-                this.basicPanel.add(this.newDocBox(this.frame.getSelectedPipeline().getDocs(), doc), BorderLayout.WEST);
-                JLabel tempDoc = new JLabel(doc.getContent());
-                tempDoc.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
-                        Toolkit.getDefaultToolkit().getScreenSize().height/5));
+            for (GProcXDoc doc : selected.getDocs()) {
+                this.basicPanel.add(this.newDocBox(doc), BorderLayout.WEST);
+                JLabel tempDoc = this.createJLabelWithWrapWidth(40, new JLabel(doc.getContent()));
                 this.basicPanel.add(tempDoc);
 
                 this.basicPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
@@ -127,27 +158,47 @@ public class XConfigTabs extends JTabbedPane {
             this.basicPanel.add(addDocButtion, BorderLayout.SOUTH);
 
 
+            // set namespaces
+            this.nsPanel.removeAll();
+            for (QName ns : selected.getNamespaces()) {
+                this.nsPanel.add(this.newNamespaceBox(ns), BorderLayout.WEST);
+            }
+
+            JButton addNSButton = new JButton("Add");
+            addNSButton.addActionListener(new AddNSListener());
+            this.nsPanel.add(addNSButton, BorderLayout.SOUTH);
 
 
             // set qnames
-            this.elementBox.clear();
-            for (QName qname : this.frame.getSelectedPipeline().getQNames()) {
-                this.elementBox.add(this.newElementBox(this.frame.getSelectedPipeline().getQNames(), qname));
+            this.requiredElePanel.removeAll();
+            for (QName qname : selected.getQNames()) {
+                if (qname.isRequired()) {
+                    this.requiredElePanel.add(this.newElementBox(selected.getQNames(), qname), BorderLayout.WEST);
+                }
             }
-            this.elementPanel.removeAll();
-            for (Box hBox : this.elementBox) {
-                this.elementPanel.add(hBox, BorderLayout.WEST);
+            if (!selected.isBuildin()) {
+                JButton addElementButton = new JButton("Add");
+                addElementButton.addActionListener(new AddElementListener());
+                this.requiredElePanel.add(addElementButton, BorderLayout.SOUTH);
             }
 
-            JButton addElementButton = new JButton("Add");
-            addElementButton.addActionListener(new AddElementListener());
-            this.elementPanel.add(addElementButton, BorderLayout.SOUTH);
+            this.otherElePanel.removeAll();
+            for (QName qname : selected.getQNames()) {
+                if (!qname.isRequired()) {
+                    this.otherElePanel.add(this.newElementBox(selected.getQNames(), qname), BorderLayout.WEST);
+                }
+            }
+            if (!selected.isBuildin()) {
+                JButton addElementButton = new JButton("Add");
+                addElementButton.addActionListener(new AddElementListener());
+                this.otherElePanel.add(addElementButton, BorderLayout.SOUTH);
+            }
 
 
             // set inputs
             this.inputPanel.removeAll();
             this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
-            for (GProcXPort port : this.frame.getSelectedPipeline().getInputs()) {
+            for (GProcXPort port : selected.getInputs()) {
                 this.inputPanel.add(this.newInBox01(port));
                 this.inputPanel.add(this.newInBox02(port));
                 this.inputPanel.add(this.newInBox03(port));
@@ -167,16 +218,17 @@ public class XConfigTabs extends JTabbedPane {
 
                 this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
             }
-            JButton addPortButtion = new JButton("New port");
-            addPortButtion.addActionListener(new AddInPortListener());
-            this.inputPanel.add(addPortButtion, BorderLayout.SOUTH);
+            if (!selected.isBuildin()) {
+                JButton addPortButtion = new JButton("New port");
+                addPortButtion.addActionListener(new AddInPortListener());
+                this.inputPanel.add(addPortButtion, BorderLayout.SOUTH);
+            }
 
 
-
-
+            // set outputs
             this.outputPanel.removeAll();
             this.outputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
-            for (GProcXPort port : this.frame.getSelectedPipeline().getOutputs()) {
+            for (GProcXPort port : selected.getOutputs()) {
                 this.outputPanel.add(this.newOutBox01(port));
                 this.outputPanel.add(this.newInBox02(port));
                 this.outputPanel.add(this.newInBox03(port));
@@ -196,27 +248,60 @@ public class XConfigTabs extends JTabbedPane {
 
                 this.outputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
             }
-            addPortButtion = new JButton("New port");
-            addPortButtion.addActionListener(new AddOutPortListener());
-            this.outputPanel.add(addPortButtion, BorderLayout.SOUTH);
+            if (!selected.isBuildin()) {
+                JButton addPortButtion = new JButton("New port");
+                addPortButtion.addActionListener(new AddOutPortListener());
+                this.outputPanel.add(addPortButtion, BorderLayout.SOUTH);
+            }
 
 
+            // set pipes
+            this.pipePanel.removeAll();
+            for (GProcXPipe pipe : selected.getPipes()) {
+                if (pipe.isValid()) {
+                    this.pipePanel.add(this.newPipeBox(pipe), BorderLayout.WEST);
+                }
+            }
+            if (frame.getMainPipeline().getOutPipe() != null) {
+                if (frame.getMainPipeline().getOutPipe().isValid()) {
+                    this.pipePanel.add(this.newPipeBox(frame.getMainPipeline().getOutPipe()));
+                }
+            }
+            JButton addPipeButton = new JButton("New pipe");
+            addPipeButton.addActionListener(new XMenuBar.PipeMenu(this.frame));
+            this.pipePanel.add(addPipeButton, BorderLayout.SOUTH);
 
 
-
+            // set subpipelines
+            this.childPanel.removeAll();
+            for (GProcXPipeline child : selected.getChildren()) {
+                this.childPanel.add(this.newSubpipelineBox(child), BorderLayout.WEST);
+            }
 
 
             this.repaint();
         }
     }
 
-    private Box newDocBox(ArrayList<GProcXDoc> docs, GProcXDoc doc) {
+    private Box newDocBox(GProcXDoc doc) {
         Box newBox = Box.createHorizontalBox();
+        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new EditDocButton(doc, "Edit"), BorderLayout.WEST);
         newBox.add(Box.createHorizontalStrut(10));
-        newBox.add(new DeleteDocButton(docs, doc, "Delete"));
+        newBox.add(new DeleteDocButton(doc, "Delete"));
         newBox.add(Box.createHorizontalStrut(30));
         newBox.add(new JLabel(doc.getType()));
+        return newBox;
+    }
+
+    private Box newNamespaceBox(QName qname) {
+        Box newBox = Box.createHorizontalBox();
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new EditElementButton(qname,"Edit"), BorderLayout.WEST);
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new DeleteNSButton(qname,"Delete"));
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new JLabel(qname.toString()));
         return newBox;
     }
 
@@ -337,6 +422,42 @@ public class XConfigTabs extends JTabbedPane {
         return newBox;
     }
 
+    private Box newPipeBox(GProcXPipe pipe) {
+        Box newBox = Box.createHorizontalBox();
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new DeletePipeButton(pipe, "Delete"));
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new JLabel(pipe.getInfo()));
+        return newBox;
+    }
+
+    private Box newSubpipelineBox(GProcXPipeline child) {
+        Box newBox = Box.createHorizontalBox();
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new DeleteSubpipelineButton(child, "Delete"));
+        newBox.add(Box.createHorizontalStrut(10));
+        newBox.add(new JLabel(child.getType() + " (" + child.getName() + ")"));
+        return newBox;
+    }
+
+    private JLabel createJLabelWithWrapWidth(int width, JLabel label){
+        if (width <= 0 || label == null){
+            return label;
+        }
+        String text = label.getText();
+        if (!text.startsWith("<html>")){
+            StringBuilder strBuilder = new StringBuilder("<html>");
+            strBuilder.append(text);
+            strBuilder.append("</html>");
+            text = strBuilder.toString();
+        }
+        label.setText(text);
+        View labelView = BasicHTML.createHTMLView(label, label.getText());
+        labelView.setSize(width, 100);
+        label.setPreferredSize(new Dimension(width, (int) labelView.getMinimumSpan(View.Y_AXIS)));
+        return label;
+    }
+
     private class EditDocButton extends JButton {
         public EditDocButton(final GProcXDoc doc, String text) {
             super(text);
@@ -381,7 +502,7 @@ public class XConfigTabs extends JTabbedPane {
     }
 
     private class DeleteDocButton extends JButton {
-        public DeleteDocButton(final ArrayList<GProcXDoc> docs, final GProcXDoc doc, String text) {
+        public DeleteDocButton(final GProcXDoc doc, String text) {
             super(text);
 
             this.addActionListener(new ActionListener() {
@@ -399,7 +520,7 @@ public class XConfigTabs extends JTabbedPane {
                             );
 
                             if (result == 0) {
-                                docs.remove(doc);
+                                frame.getSelectedPipeline().getDocs().remove(doc);
                                 frame.updateInfo();
                             }
                         }
@@ -433,6 +554,34 @@ public class XConfigTabs extends JTabbedPane {
                                 qnames.remove(qname);
                                 frame.updateInfo();
                             }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private class DeleteNSButton extends JButton {
+
+        public DeleteNSButton(final QName ns, String text) {
+            super(text);
+
+            this.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+
+                    if (frame.getSelectedPipeline() != null) {
+
+                        int result = JOptionPane.showConfirmDialog(
+                                null,
+                                "Remove this namespace?",
+                                "Warning",
+                                JOptionPane.YES_NO_CANCEL_OPTION
+                        );
+
+                        if (result == 0) {
+                            frame.getSelectedPipeline().getNamespaces().remove(ns);
+                            frame.updateInfo();
                         }
                     }
                 }
@@ -528,6 +677,70 @@ public class XConfigTabs extends JTabbedPane {
         }
     }
 
+    private class DeletePipeButton extends JButton {
+        public DeletePipeButton(final GProcXPipe pipe, String text) {
+            super(text);
+
+            this.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+
+                    if (frame.getSelectedPipeline() != null) {
+
+                        int result = JOptionPane.showConfirmDialog(
+                                null,
+                                "Remove this pipe?",
+                                "Warning",
+                                JOptionPane.YES_NO_CANCEL_OPTION
+                        );
+
+                        if (result == 0) {
+                            if (pipe == frame.getSelectedPipeline().getOutPipe()) {
+                                frame.getSelectedPipeline().setOutPipe(null);
+                                frame.getSelectedPipeline().setOutPipeFlag(false);
+                            } else {
+                                frame.getSelectedPipeline().getPipes().remove(pipe);
+                            }
+                            frame.updateInfo();
+                        }
+                    }
+
+                }
+            });
+        }
+    }
+
+    private class DeleteSubpipelineButton extends JButton {
+
+        public DeleteSubpipelineButton(final GProcXPipeline child, String text) {
+            super(text);
+
+            this.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+
+                    if (frame.getSelectedPipeline() != null) {
+
+                        int result = JOptionPane.showConfirmDialog(
+                                null,
+                                "Remove this subpipeline?",
+                                "Warning",
+                                JOptionPane.YES_NO_CANCEL_OPTION
+                        );
+
+                        if (result == 0) {
+                            if (child != null) {
+                                frame.getSelectedPipeline().deleteChild(child);
+                            }
+                            frame.getCurrentPanel().repaint();
+                            frame.setSelectedPipeline(frame.getMainPipeline());
+                        }
+                    }
+                }
+            });
+        }
+    }
+
     private class AddSourceButton extends JButton {
 
         public AddSourceButton(final GProcXPort port, String text) {
@@ -596,6 +809,23 @@ public class XConfigTabs extends JTabbedPane {
                         frame.getSelectedPipeline().addQName(new QName("", inputContent, ""));
                         frame.updateInfo();
                     }
+                }
+            }
+        }
+    }
+
+    private class AddNSListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            if (frame.getSelectedPipeline() != null) {
+                String inputContent = JOptionPane.showInputDialog(
+                        null,
+                        "Please enter the namespace:",
+                        "xmlns:"
+                );
+
+                if (inputContent != null) {
+                    frame.getSelectedPipeline().addNamespace(new QName("xmlns", inputContent.substring(6, inputContent.length()), ""));
+                    frame.updateInfo();
                 }
             }
         }

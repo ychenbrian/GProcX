@@ -42,7 +42,7 @@ public class GProcXDoc {
         for (int i = 0; i < retract; i++) {
             code += "    ";
         }
-        code += "</" + this.getType() + ">\n";
+        code += "</" + this.getType() + ">\n\n";
 
 
         return code;

@@ -229,14 +229,14 @@ public class XPanel extends JPanel {
             // remove the current square if double clicked
             if (!frame.isDrawStepActive()) {
                 GProcXPipeline selected = findPipeline(event.getPoint());
-                if (selected == null && event.getClickCount() == 1) {
-                    frame.setSelectedPipeline(mainPipeline);
-                    frame.updateInfo();
+                if (selected == null) {
+                    if (event.getClickCount() == 1) {
+                        frame.setSelectedPipeline(mainPipeline);
+                    }
                     return;
                 }
                 if (event.getClickCount() == 1) {
                     frame.setSelectedPipeline(selected);
-                    frame.updateInfo();
                 } else if (event.getClickCount() == 2) {
                     if (selected.isAtomic()) {
                         frame.showErrorMessage("This is an atomic step.");
@@ -347,7 +347,7 @@ public class XPanel extends JPanel {
 
         popupMenu.add(deleteMenuItem);
 
-        deleteMenuItem.addActionListener(new DeletePopMenu(findPipeline(p)));
+        deleteMenuItem.addActionListener(new DeletePopMenu(this.frame, findPipeline(p), this));
 
         popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
     }
@@ -373,20 +373,32 @@ public class XPanel extends JPanel {
         popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
     }
 
-    private class DeletePopMenu implements ActionListener {
+    public static class DeletePopMenu implements ActionListener {
 
         GProcXPipeline select;
+        XFrame frame;
+        XPanel panel;
 
-        public DeletePopMenu(GProcXPipeline select) {
+        public DeletePopMenu(XFrame frame, GProcXPipeline select, XPanel panel) {
+            this.frame = frame;
+            this.panel = panel;
             this.select = select;
         }
         public void actionPerformed(ActionEvent e) {
-            if (select != null) {
-                mainPipeline.deleteChild(select);
+            int result = JOptionPane.showConfirmDialog(
+                    null,
+                    "Remove this subpipeline?",
+                    "Warning",
+                    JOptionPane.YES_NO_CANCEL_OPTION
+            );
+
+            if (result == 0) {
+                if (this.select != null) {
+                    this.frame.getMainPipeline().deleteChild(this.select);
+                }
+                this.panel.repaint();
+                this.frame.setSelectedPipeline(this.frame.getMainPipeline());
             }
-            repaint();
-            frame.setSelectedPipeline(frame.getMainPipeline());
-            frame.updateInfo();
         }
     }
 }
