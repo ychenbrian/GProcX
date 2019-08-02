@@ -33,6 +33,7 @@ gprocx\step\GProcXDoc.class
 gprocx\GProcXPluginExtension$2.class
 gprocx\mainUI\XConfigTabs$EditElementButton$1.class
 gprocx\mainUI\XConfigTabs$4.class
+gprocx\mainUI\XMenuBar$OpenMenu.class
 gprocx\mainUI\XConfigTabs$DeleteNSButton$1.class
 gprocx\core\QName.class
 gprocx\mainUI\XConfigTabs$1.class
@@ -46,6 +47,7 @@ gprocx\mainUI\XConfigTabs$AddSourceButton$1.class
 gprocx\mainUI\XConfigTabs$DeleteSourceButton.class
 gprocx\mainUI\XConfigTabs$DeleteSubpipelineButton$1.class
 gprocx\mainUI\XConfigTabs$DeletePipeButton$1.class
+gprocx\mainUI\XMenuBar$SaveMenu.class
 gprocx\mainUI\XConfigTabs$EditDocButton$1.class
 gprocx\mainUI\XMenuBar$PipeMenu.class
 gprocx\mainUI\XConfigTabs$EditDocButton.class

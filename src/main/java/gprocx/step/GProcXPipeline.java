@@ -9,14 +9,12 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
-public class GProcXPipeline implements Comparable<GProcXPipeline> {
-
-    private XFrame frame;
-
+public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable {
     // variables for the pipeline
     private QName type;
     private ArrayList<GProcXPort> inputs = new ArrayList<GProcXPort>();
@@ -39,34 +37,25 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     private int x, y, w, h;
 
     public GProcXPipeline(XFrame frame, String type) throws XProcInterfaceException {
-        this.frame = frame;
-
         this.shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
         this.type = new QName(type);
         this.uuid = UUID.randomUUID();
 
-        this.setPipeline();
+        StepInfo.setPipelineInfo(frame, this);
+        frame.updateInfo();
     }
 
     public GProcXPipeline(XFrame frame, Element element) throws XProcInterfaceException {
-        this.frame = frame;
-
         this.shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
         this.type = new QName(element.getQualifiedName());
         this.uuid = UUID.randomUUID();
 
-        this.setPipeline();
+        StepInfo.setPipelineInfo(frame, this);
+        frame.updateInfo();
     }
 
-    public GProcXPipeline(XFrame frame) {
-        this.frame = frame;
+    public GProcXPipeline() {
         this.uuid = UUID.randomUUID();
-    }
-
-    public void setPipeline() {
-
-        StepInfo.setPipelineInfo(this.frame, this);
-        this.frame.updateInfo();
     }
 
     public void setAtomic(boolean atomic) {
@@ -120,7 +109,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
         if (this.outPipe == null && this.outPipeFlag == true) {
             if (getPrimaryOutport(this) != null) {
-                this.outPipe = new GProcXPipe(this.frame);
+                this.outPipe = new GProcXPipe();
                 this.outPipe.setDefault(true);
                 this.outPipe.setToPipeline(this, true);
                 this.outPipe.setToPort(getPrimaryOutport(this));
@@ -195,10 +184,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         return null;
     }
 
-    public XFrame getFrame() {
-        return frame;
-    }
-
     public GProcXPipeline findPipeline(String name) {
         if (this.getName().equals(name)) {
             return this;
@@ -261,7 +246,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
     }
 
     public void addOption(GProcXOption option) {
-        QName newQ = new QName("", option.getName(), option.getSelect());
+        QName newQ = new QName(option.getName(), option.getSelect());
         newQ.setRequired(option.isRequired());
         this.addQName(newQ);
     }
@@ -277,7 +262,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         this.getOutputs().add(output);
     }
 
-    public void addPipe(GProcXPipe pipe) {
+    public void addPipe(XFrame frame, GProcXPipe pipe) {
         if (hasPipe(pipe)) {
             return;
         }
@@ -310,9 +295,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         }
 
         this.pipes.add(pipe);
-        if (this.frame != null) {
-            this.frame.updateInfo();
-        }
+        frame.updateInfo();
     }
 
     public boolean isBuildin() {
@@ -323,7 +306,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         isBuildin = buildin;
     }
 
-    public String getType() { return type.getUriLexical(); }
+    public String getType() { return type.getLexical(); }
 
     public static GProcXPort getPrimaryInport(GProcXPipeline pipeline) {
         if (pipeline != null) {
@@ -373,18 +356,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         }
     }
 
-    public boolean setElementValue(String key, String value, String uri) {
-        for (QName element : qnames) {
-            if (element.getLexical() == key && element.getUri() == uri) {
-                element.setValue(value);
-                return true;
-            }
-        }
-
-        // if not find the element
-        return false;
-    }
-
     public void deleteChild(GProcXPipeline child) {
         ArrayList<GProcXPipe> pipeWL = new ArrayList<GProcXPipe>();
 
@@ -409,7 +380,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     public void addQName(QName q) {
         for (QName qname : this.getQNames()) {
-            if (qname.getUriLexical().equals(q.getUriLexical())) {
+            if (qname.getLexical().equals(q.getLexical())) {
                 this.getQNames().remove(qname);
                 break;
             }
@@ -419,7 +390,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
 
     public void addNamespace(QName newNS) {
         for (QName ns : this.getNamespaces()) {
-            if (ns.getUriLexical().equals(newNS.getUriLexical())) {
+            if (ns.getLexical().equals(newNS.getLexical())) {
                 this.getNamespaces().remove(ns);
                 break;
             }
@@ -462,16 +433,16 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         return "";
     }
 
-    public void addChildren(GProcXPipeline step) {
+    public void addChildren(XFrame frame, GProcXPipeline step) {
         step.setParent(this);
 
-        GProcXPipe pipe = new GProcXPipe(this.getFrame());
+        GProcXPipe pipe = new GProcXPipe();
         this.children.add(step);
 
         pipe.setToPipeline(step, false);
         pipe.setToPort(getPrimaryInport(step));
         pipe.setDefault(true);
-        this.addPipe(pipe);
+        this.addPipe(frame, pipe);
     }
 
     public boolean hasPipe(GProcXPipe pipe) {
@@ -521,7 +492,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         return uuid;
     }
 
-    public void drawSelf(Graphics2D g2, FontMetrics metrics) {
+    public void drawSelf(XFrame frame, Graphics2D g2, FontMetrics metrics) {
         //Font sansbold14 = new Font("SansSerif", Font.BOLD, 24);
         int xText = this.x - metrics.stringWidth(this.getType()) / 2;
         int yText = this.y - metrics.getHeight() / 2 + metrics.getAscent();
@@ -538,9 +509,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
         }
     }
 
-    public void drawChildren(Graphics2D g2, FontMetrics metrics) {
+    public void drawChildren(XFrame frame, Graphics2D g2, FontMetrics metrics) {
         for (GProcXPipeline child : children) {
-            child.drawSelf(g2, metrics);
+            child.drawSelf(frame, g2, metrics);
         }
     }
 
@@ -592,15 +563,6 @@ public class GProcXPipeline implements Comparable<GProcXPipeline> {
             }
         }
         return null;
-    }
-
-    public void updateQName(QName qname) {
-        for (QName q : this.qnames) {
-            if (q.getUri() == qname.getUri() && q.getLexical() == qname.getLexical()) {
-                q.setValue(qname.getValue());
-                return;
-            }
-        }
     }
 
     public String toString(int retract) {

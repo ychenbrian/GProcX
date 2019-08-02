@@ -4,7 +4,6 @@ import gprocx.core.*;
 import gprocx.step.GProcXDoc;
 import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
-import javafx.scene.control.TitledPane;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -489,7 +488,7 @@ public class XConfigTabs extends JTabbedPane {
                 public void actionPerformed(ActionEvent e) {
                     String inputContent = JOptionPane.showInputDialog(
                             null,
-                            qname.getUriLexical() + "=",
+                            qname.getLexical() + "=",
                             qname.getValue()
                     );
                     if (inputContent != null) {
@@ -806,7 +805,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().addQName(new QName("", inputContent, ""));
+                        frame.getSelectedPipeline().addQName(new QName(inputContent, ""));
                         frame.updateInfo();
                     }
                 }
@@ -824,7 +823,7 @@ public class XConfigTabs extends JTabbedPane {
                 );
 
                 if (inputContent != null) {
-                    frame.getSelectedPipeline().addNamespace(new QName("xmlns", inputContent.substring(6, inputContent.length()), ""));
+                    frame.getSelectedPipeline().addNamespace(new QName(inputContent, ""));
                     frame.updateInfo();
                 }
             }

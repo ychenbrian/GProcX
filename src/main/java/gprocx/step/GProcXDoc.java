@@ -1,6 +1,8 @@
 package gprocx.step;
 
-public class GProcXDoc {
+import java.io.Serializable;
+
+public class GProcXDoc implements Serializable {
 
     private String type;
     private String content = "";

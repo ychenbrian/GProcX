@@ -26,8 +26,8 @@ public class XMenuBar extends JMenuBar {
 
         JMenu fileMenu = new JMenu("File");
         JMenuItem newMenuItem = new JMenuItem("New"); fileMenu.add(newMenuItem);
-        //JMenuItem openMenuItem = new JMenuItem("Open"); fileMenu.add(openMenuItem);
-        //JMenuItem saveMenuItem = new JMenuItem("Save"); fileMenu.add(saveMenuItem);
+        JMenuItem openMenuItem = new JMenuItem("Open"); fileMenu.add(openMenuItem);
+        JMenuItem saveMenuItem = new JMenuItem("Save"); fileMenu.add(saveMenuItem);
         fileMenu.addSeparator();
         JMenuItem importMenuItem = new JMenuItem("Import"); fileMenu.add(importMenuItem);
         JMenuItem exportMenuItem = new JMenuItem("Export"); fileMenu.add(exportMenuItem);
@@ -43,8 +43,11 @@ public class XMenuBar extends JMenuBar {
         JMenuItem pipeMenuItem = new JMenuItem("Pipe"); insertMenu.add(pipeMenuItem);
 
         newMenuItem.addActionListener(new NewMenu());
+        openMenuItem.addActionListener(new OpenMenu());
+        saveMenuItem.addActionListener(new SaveMenu());
         importMenuItem.addActionListener(new ImportMenu());
         exportMenuItem.addActionListener(new ExportMenu());
+
         pipelineMenuItem.addActionListener(new PipelineMenu(this.frame));
         atomicMenuItem.addActionListener(new AtomicMenu(this.frame));
         otherStepMenuItem.addActionListener(new OtherStepMenu(this.frame));
@@ -55,7 +58,44 @@ public class XMenuBar extends JMenuBar {
         this.add(insertMenu);
     }
 
-    private File showFileOpenDialog() {
+    private File showFileOpen() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File("."));
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+
+        fileChooser.setFileFilter(new FileNameExtensionFilter("gprocx(*.gprocx)", "gprocx"));
+
+        int result = fileChooser.showOpenDialog(null);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File file = fileChooser.getSelectedFile();
+
+            return file;
+        }
+        return null;
+    }
+
+    private File showFileSave() {
+
+        frame.showInformationMessage("You are going to save the current project.");
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("untitled.gprocx"));
+
+        int result = fileChooser.showSaveDialog(null);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File file = fileChooser.getSelectedFile();
+
+            return file;
+        }
+        return null;
+    }
+
+    private File showFileImport() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File("."));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -74,9 +114,9 @@ public class XMenuBar extends JMenuBar {
         return null;
     }
 
-    private File showFileSaveDialog() {
+    private File showFileExport() {
 
-        frame.showInformationMessage("You are going to save the current pipeline.");
+        frame.showInformationMessage("You are going to export the current pipeline.");
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setSelectedFile(new File("untitled.xpl"));
@@ -108,7 +148,7 @@ public class XMenuBar extends JMenuBar {
             );
 
             if (inputContent != null) {
-                GProcXPipeline newPipeline = new GProcXPipeline(frame);
+                GProcXPipeline newPipeline = new GProcXPipeline();
 
                 newPipeline.setType((String)inputContent);
                 StepInfo.setPipelineInfo(frame, newPipeline);
@@ -118,21 +158,56 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
+    private class OpenMenu implements ActionListener {
+
+        public void actionPerformed(ActionEvent event) {
+            File file = showFileOpen();
+            if (file == null) {
+                return;
+            }
+
+            try {
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+
+                GProcXPipeline pipeline = (GProcXPipeline) ois.readObject();
+                frame.addMainPipeline(pipeline);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class SaveMenu implements ActionListener {
+
+        public void actionPerformed(ActionEvent event) {
+            GProcXPipeline pipeline = frame.getMainPipeline();
+
+            File file = showFileSave();
+            if (file == null) {
+                return;
+            }
+
+            try {
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
+                oos.writeObject(pipeline);
+                oos.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private class ImportMenu implements ActionListener {
-
-        String test2 = "<p:declare-step xmlns:p=\"http://www.w3.org/ns/xproc\" xmlns:c=\"http://www.w3.org/ns/xproc-step\" name=\"myPipeline\" version=\"1.0\">" +
-                "<p:input port=\"source\" primary=\"true\">\n" +
-                "        <p:document href=\"BookStore.xml\" xmlns:c=\"http://www.w3.org/ns/xproc-step\"/>" +
-                "    </p:input>\n" +
-                "    <p:output port=\"result\"/>\n" +
-                "    \n" +
-                "    <p:delete match=\"/BookStore/Book/Title\" name=\"step1\" xmlns:exf=\"http://exproc.org/standard/functions\"/>\n" +
-                "</p:declare-step9>";
-
 
         public void actionPerformed(ActionEvent event) {
 
-            File file = showFileOpenDialog();
+            File file = showFileImport();
             if (file == null) {
                 return;
             }
@@ -177,7 +252,7 @@ public class XMenuBar extends JMenuBar {
             }
 
             Element mainEle = (Element) docs.getChild(0);
-            GProcXPipeline newPipeline = new GProcXPipeline(frame);
+            GProcXPipeline newPipeline = new GProcXPipeline();
             GProcXProcessor.setPipeline(frame, null, newPipeline, mainEle);
 
             frame.addMainPipeline(newPipeline);
@@ -187,7 +262,7 @@ public class XMenuBar extends JMenuBar {
     private class ExportMenu implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            File file = showFileSaveDialog();
+            File file = showFileExport();
 
             if (file == null) {
                 return;

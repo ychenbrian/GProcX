@@ -36,7 +36,7 @@ public class StepInfo {
             pipeline.addOption(new GProcXOption("xpath-version", "", false));
             pipeline.addOption(new GProcXOption("exclude-inline-prefixes", "", false));
             pipeline.addOption(new GProcXOption("version", "1.0", false));
-            pipeline.addNamespace(new QName("xmlns", "p", "http://www.w3.org/ns/xproc"));
+            pipeline.addNamespace(new QName("xmlns:p", "http://www.w3.org/ns/xproc"));
         } else if (type.equals("p:pipeline")) {
             pipeline.addDoc(new GProcXDoc("p:documentation", "empty"));
             pipeline.setAtomic(false);

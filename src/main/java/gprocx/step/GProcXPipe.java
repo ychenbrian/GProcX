@@ -2,15 +2,13 @@ package gprocx.step;
 
 import gprocx.core.GProcXPort;
 import gprocx.core.QName;
-import gprocx.mainUI.XFrame;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class GProcXPipe {
-
-    private XFrame frame;
+public class GProcXPipe implements Serializable {
 
     private GProcXPort parent;
     private ArrayList<QName> qnames = new ArrayList<QName>();
@@ -27,9 +25,7 @@ public class GProcXPipe {
     private int startX, startY;
     private int endX, endY;
 
-    public GProcXPipe(XFrame frame) {
-        this.frame = frame;
-
+    public GProcXPipe() {
         this.startX = 0;
         this.startY = 0;
         this.endX = 0;

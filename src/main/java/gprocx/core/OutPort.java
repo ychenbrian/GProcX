@@ -3,7 +3,9 @@ package gprocx.core;
 import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
 
-public class OutPort extends GProcXPort {
+import java.io.Serializable;
+
+public class OutPort extends GProcXPort implements Serializable {
 
     public OutPort(GProcXPipeline parent, String port, boolean primary, boolean sequence, String kind) {
         super(parent, port, primary, sequence, kind);
@@ -16,7 +18,7 @@ public class OutPort extends GProcXPort {
     @Override
     public String getPort() {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("port")) {
+            if (qname.getLexical().equals("port")) {
                 return qname.getValue();
             }
         }
@@ -39,12 +41,12 @@ public class OutPort extends GProcXPort {
             }
         }
         for (QName qname : qnames) {
-            if (qname.getUriLexical().equals("primary")) {
+            if (qname.getLexical().equals("primary")) {
                 if (this.getPort().equals("result") && qname.getValue().equals("true")) {
                     continue;
                 }
             }
-            if (qname.getUriLexical().equals("sequence") && qname.getValue().equals("false")) {
+            if (qname.getLexical().equals("sequence") && qname.getValue().equals("false")) {
                 continue;
             }
             if (!qname.getValue().equals("")) {

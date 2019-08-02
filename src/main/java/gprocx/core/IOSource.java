@@ -1,8 +1,9 @@
 package gprocx.core;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class IOSource {
+public class IOSource implements Serializable {
 
     private GProcXPort parent;
     private ArrayList<QName> qnames = new ArrayList<QName>();
@@ -15,15 +16,15 @@ public class IOSource {
         this.qnames = new ArrayList<QName>();
 
         if (this.sourceType.equals("p:document")) {
-            this.qnames.add(new QName("", "href", ""));
+            this.qnames.add(new QName("href", ""));
         } else if (sourceType.equals("p:data")) {
-            this.qnames.add(new QName("", "href", ""));
-            this.qnames.add(new QName("", "wrapper", ""));
-            this.qnames.add(new QName("", "wrapper-prefix", ""));
-            this.qnames.add(new QName("", "wrapper-namespace", ""));
-            this.qnames.add(new QName("", "content-type", ""));
+            this.qnames.add(new QName("href", ""));
+            this.qnames.add(new QName("wrapper", ""));
+            this.qnames.add(new QName("wrapper-prefix", ""));
+            this.qnames.add(new QName("wrapper-namespace", ""));
+            this.qnames.add(new QName("content-type", ""));
         } else if (sourceType.equals("p:inline")) {
-            this.qnames.add(new QName("", "exclude-inline-prefixes", ""));
+            this.qnames.add(new QName("exclude-inline-prefixes", ""));
         }
     }
 

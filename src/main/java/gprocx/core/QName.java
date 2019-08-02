@@ -1,38 +1,23 @@
 package gprocx.core;
 
-public class QName {
+import java.io.Serializable;
 
-    private String uri = "";
+public class QName implements Serializable {
+
     private String lexical = "";
     private String value = "";
     private boolean isRequired = false;
 
     public QName(QName qname) {
-        this.uri = qname.uri;
         this.lexical = qname.lexical;
         this.value = qname.value;
     }
 
-    public QName(String uri, String lexical) {
-        this.uri = uri;
+    public QName(String lexical) {
         this.lexical = lexical;
     }
 
-    public QName(String qname) {
-        for (int i = 0; i < qname.length(); i++) {
-            if (qname.charAt(i) != ':') {
-                this.uri += qname.charAt(i);
-            } else {
-                for (int j = i + 1; j < qname.length(); j++) {
-                    this.lexical += qname.charAt(j);
-                }
-                break;
-            }
-        }
-    }
-
-    public QName(String uri, String lexical, String value) {
-        this.uri = uri;
+    public QName(String lexical, String value) {
         this.lexical = lexical;
         this.value = value;
     }
@@ -43,24 +28,6 @@ public class QName {
 
     public String getLexical() {
         return this.lexical;
-    }
-
-    public String getUriLexical() {
-        String code = "";
-        if (this.uri != "") {
-            code += uri + ":";
-        }
-        code += lexical;
-
-        return code;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public String getUri() {
-        return uri;
     }
 
     public void setValue(String value) {
@@ -82,9 +49,6 @@ public class QName {
     public String toString() {
 
         String code = "";
-        if (this.uri != "") {
-            code += uri + ":";
-        }
         code += lexical + "=\"";
         code += value + "\"";
 

@@ -117,7 +117,7 @@ public class XFrame {
 
     public void addMainPipeline(GProcXPipeline mainPipeline) {
         this.mainPipeline = mainPipeline;
-        this.setSelectedPipeline(this.mainPipeline);
+        this.setSelectedPipeline(mainPipeline);
 
         this.figureTabs.addPipeline(mainPipeline);
         this.figureTabs.openTab(mainPipeline.getUUID());

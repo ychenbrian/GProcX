@@ -3,9 +3,10 @@ package gprocx.core;
 import gprocx.step.GProcXPipe;
 import gprocx.step.GProcXPipeline;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class GProcXPort {
+public class GProcXPort implements Serializable {
 
     protected String port = "source";
     protected boolean primary = true;
@@ -30,7 +31,7 @@ public class GProcXPort {
         this.sequence = sequence;
         this.kind = kind;
 
-        this.addQName(new QName("", "port", this.port));
+        this.addQName(new QName("port", this.port));
     }
 
     public GProcXPort() {}
@@ -99,12 +100,12 @@ public class GProcXPort {
 
     public void setPort(String port) {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("port")) {
+            if (qname.getLexical().equals("port")) {
                 qname.setValue(port);
                 return;
             }
         }
-        this.addQName(new QName("", "port", port));
+        this.addQName(new QName("port", port));
     }
 
     public String getPort() {
@@ -113,7 +114,7 @@ public class GProcXPort {
 
     public boolean isPrimary() {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("primary")) {
+            if (qname.getLexical().equals("primary")) {
                 return Boolean.valueOf(qname.getValue());
             }
         }
@@ -122,7 +123,7 @@ public class GProcXPort {
 
     public boolean isSequence() {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("sequence")) {
+            if (qname.getLexical().equals("sequence")) {
                 return Boolean.valueOf(qname.getValue());
             }
         }
@@ -145,22 +146,22 @@ public class GProcXPort {
 
     public void setPrimary(boolean primary) {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("primary")) {
+            if (qname.getLexical().equals("primary")) {
                 qname.setValue(String.valueOf(primary));
                 return;
             }
         }
-        this.addQName(new QName("", "primary", String.valueOf(primary)));
+        this.addQName(new QName("primary", String.valueOf(primary)));
     }
 
     public void setSequence(boolean sequence) {
         for (QName qname : this.qnames) {
-            if (qname.getUriLexical().equals("sequence")) {
+            if (qname.getLexical().equals("sequence")) {
                 qname.setValue(String.valueOf(sequence));
                 return;
             }
         }
-        this.addQName(new QName("", "sequence", String.valueOf(sequence)));
+        this.addQName(new QName("sequence", String.valueOf(sequence)));
     }
 
     public ArrayList<IOSource> getSources() {

@@ -90,7 +90,7 @@ public class XPanel extends JPanel {
         FontMetrics metrics = g2.getFontMetrics(sansbold14);
         g2.setFont(sansbold14);
 
-        this.mainPipeline.drawChildren(g2, metrics);
+        this.mainPipeline.drawChildren(frame, g2, metrics);
         this.mainPipeline.drawPipes(g2);
         this.mainPipeline.drawPorts(g2, metrics);
     }
@@ -114,7 +114,7 @@ public class XPanel extends JPanel {
 
                 // if select the main in port of the parent
                 if (selected == null && selectInPort(event.getPoint())) {
-                    newPipe = new GProcXPipe(frame);
+                    newPipe = new GProcXPipe();
                     newPipe.setFromPipeline(mainPipeline, true);
 
                     Object[] selectionValues = new Object[mainPipeline.getInputs().size()];
@@ -137,7 +137,7 @@ public class XPanel extends JPanel {
                     frame.setDrawPipe02Active(true);
                 } else if (selected != null) {
 
-                    newPipe = new GProcXPipe(frame);
+                    newPipe = new GProcXPipe();
                     newPipe.setFromPipeline(selected, false);
 
                     Object[] selectionValues = new Object[selected.getOutputs().size()];
@@ -189,7 +189,7 @@ public class XPanel extends JPanel {
 
                     newPipe.setToPort(mainPipeline.findOutPort((String) inputContent));
                     newPipe.setDefault(false);
-                    mainPipeline.addPipe(newPipe);
+                    mainPipeline.addPipe(frame, newPipe);
                     frame.setDrawPipe02Active(false);
 
                 } else if (selected != null) {
@@ -217,7 +217,7 @@ public class XPanel extends JPanel {
 
                         newPipe.setToPort(selected.findInPort((String) inputContent));
                         newPipe.setDefault(false);
-                        mainPipeline.addPipe(newPipe);
+                        mainPipeline.addPipe(frame, newPipe);
                         frame.setDrawPipe02Active(false);
                     }
                 }
@@ -305,7 +305,7 @@ public class XPanel extends JPanel {
                         e.printStackTrace();
                     }
                     frame.addPipeline(current);
-                    mainPipeline.addChildren(current);
+                    mainPipeline.addChildren(frame, current);
 
                     existCurrent = false;
                 }

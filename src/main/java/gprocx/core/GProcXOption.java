@@ -1,6 +1,8 @@
 package gprocx.core;
 
-public class GProcXOption {
+import java.io.Serializable;
+
+public class GProcXOption implements Serializable {
 
     private String name;
     private String select;

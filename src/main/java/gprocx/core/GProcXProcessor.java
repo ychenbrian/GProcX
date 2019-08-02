@@ -20,7 +20,7 @@ public class GProcXProcessor {
             pipeline.addQName(new QName(qname));
         }
         for (int i = 0; i < pipelineEle.getNamespaceDeclarationCount(); i++) {
-            pipeline.addNamespace(new QName("xmlns", pipelineEle.getNamespacePrefix(i),
+            pipeline.addNamespace(new QName("xmlns:" + pipelineEle.getNamespacePrefix(i),
                     pipelineEle.getNamespaceURI(pipelineEle.getNamespacePrefix(i))));
         }
 
@@ -54,7 +54,7 @@ public class GProcXProcessor {
                     continue;
                 }
 
-                GProcXPipeline newPipeline = new GProcXPipeline(pipeline.getFrame());
+                GProcXPipeline newPipeline = new GProcXPipeline();
                 y += 2*h;
                 x += 15;
                 if (y >= (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
@@ -65,7 +65,7 @@ public class GProcXProcessor {
 
                 setPipeline(frame, pipeline, newPipeline, childEle);
                 frame.addPipeline(newPipeline);
-                pipeline.addChildren(newPipeline);
+                pipeline.addChildren(frame, newPipeline);
             }
         }
         pipeline.updateInfo();
@@ -76,38 +76,38 @@ public class GProcXProcessor {
             port.addQName(new QName(qname));
         }
         for (int i = 0; i < portEle.getNamespaceDeclarationCount(); i++) {
-            port.addNamespace(new QName("xmlns", portEle.getNamespacePrefix(i),
+            port.addNamespace(new QName("xmlns:" + portEle.getNamespacePrefix(i),
                     portEle.getNamespaceURI(portEle.getNamespacePrefix(i))));
         }
 
         Elements sourceEles = portEle.getChildElements();
         for (Element sourceEle : sourceEles) {
             if (sourceEle.getQualifiedName().equals("p:pipe")) {
-                GProcXPipe pipe = new GProcXPipe(parent.getFrame());
+                GProcXPipe pipe = new GProcXPipe();
                 pipe.setParent(port);
                 pipe.setToPipeline(pipeline, parent == null);
                 pipe.setToPort(port);
 
                 for (int i = 0; i < sourceEle.getNamespaceDeclarationCount(); i++) {
-                    pipe.addNamespace(new QName("xmlns", sourceEle.getNamespacePrefix(i),
+                    pipe.addNamespace(new QName("xmlns:" + sourceEle.getNamespacePrefix(i),
                             sourceEle.getNamespaceURI(sourceEle.getNamespacePrefix(i))));
                 }
 
                 ArrayList<QName> qnames = getQNames(sourceEle);
                 GProcXPipeline from = null;
                 for (QName qname : qnames) {
-                    if (qname.getUriLexical().equals("step")) {
+                    if (qname.getLexical().equals("step")) {
                         from = parent.findPipeline(qname.getValue());
                         pipe.setFromPipeline(from, from == parent);
                     }
                 }
                 for (QName qname : qnames) {
-                    if (qname.getUriLexical().equals("port")) {
+                    if (qname.getLexical().equals("port")) {
                         pipe.setFromPort(from.findPort(qname.getValue()));
                     }
                 }
                 for (QName qname : qnames) {
-                    if (!qname.getUriLexical().equals("port") && !qname.getUriLexical().equals("step")) {
+                    if (!qname.getLexical().equals("port") && !qname.getLexical().equals("step")) {
                         pipe.addQName(new QName(qname));
                     }
                 }
@@ -124,7 +124,7 @@ public class GProcXProcessor {
 
     public static void setSource(IOSource source, Element sourceEle) {
         for (int i = 0; i < sourceEle.getNamespaceDeclarationCount(); i++) {
-            source.addNamespace(new QName("xmlns", sourceEle.getNamespacePrefix(i),
+            source.addNamespace(new QName("xmlns:" + sourceEle.getNamespacePrefix(i),
                     sourceEle.getNamespaceURI(sourceEle.getNamespacePrefix(i))));
         }
         for (QName qname : getQNames(sourceEle)) {
@@ -136,28 +136,10 @@ public class GProcXProcessor {
         }
     }
 
-    public static ArrayList<Element> findElements(Elements elements, String qualifiedName) {
-        ArrayList<Element> select = new ArrayList<Element>();
-        for (Element element : elements) {
-            if (element.getQualifiedName().equals(qualifiedName)) {
-                select.add(element);
-            }
-        }
-        return select;
-    }
-
-    public static ArrayList<Element> getElementArray(Elements elements) {
-        ArrayList<Element> select = new ArrayList<Element>();
-        for (Element element : elements) {
-            select.add(element);
-        }
-        return select;
-    }
-
     public static ArrayList<QName> getQNames(Element element) {
         ArrayList<QName> qnames = new ArrayList<QName>();
         for (int i = 0; i < element.getAttributeCount(); i++) {
-            qnames.add(new QName("", element.getAttribute(i).getQualifiedName(), element.getAttribute(i).getValue()));
+            qnames.add(new QName(element.getAttribute(i).getQualifiedName(), element.getAttribute(i).getValue()));
         }
         return qnames;
     }
