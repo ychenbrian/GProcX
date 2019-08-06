@@ -14,14 +14,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
-public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable {
+public class GProcXStep implements Comparable<GProcXStep>, Serializable {
     // variables for the pipeline
-    private QName type;
+    private String type;
     private ArrayList<GProcXPort> inputs = new ArrayList<GProcXPort>();
     private ArrayList<GProcXPort> outputs = new ArrayList<GProcXPort>();
 
-    private GProcXPipeline parent = null;
-    private ArrayList<GProcXPipeline> children = new ArrayList<GProcXPipeline>();
+    private GProcXStep parent = null;
+    private ArrayList<GProcXStep> children = new ArrayList<GProcXStep>();
     private ArrayList<GProcXDoc> docs = new ArrayList<GProcXDoc>();
     private ArrayList<QName> qnames = new ArrayList<QName>();
     private ArrayList<QName> namespaces = new ArrayList<QName>();
@@ -36,25 +36,60 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
     private RoundRectangle2D.Double shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
     private int x, y, w, h;
 
-    public GProcXPipeline(XFrame frame, String type) throws XProcInterfaceException {
+    public GProcXStep(XFrame frame, String type) throws XProcInterfaceException {
         this.shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
-        this.type = new QName(type);
+        this.type = type;
         this.uuid = UUID.randomUUID();
 
-        StepInfo.setPipelineInfo(frame, this);
+        StepInfo.setStepInfo(frame, this);
         frame.updateInfo();
     }
 
-    public GProcXPipeline(XFrame frame, Element element) throws XProcInterfaceException {
+    public GProcXStep(XFrame frame, Element element) throws XProcInterfaceException {
         this.shape = new RoundRectangle2D.Double(0, 0, 0, 0, 15, 15);
-        this.type = new QName(element.getQualifiedName());
+        this.type = element.getQualifiedName();
         this.uuid = UUID.randomUUID();
 
-        StepInfo.setPipelineInfo(frame, this);
+        StepInfo.setStepInfo(frame, this);
         frame.updateInfo();
     }
 
-    public GProcXPipeline() {
+    public GProcXStep(XFrame frame, GProcXStep step) {
+        this.x = step.getX();
+        this.y = step.getY();
+        this.w = step.getW();
+        this.h = step.getH();
+
+        this.shape = new RoundRectangle2D.Double(this.x, this.y, this.w, this.h, 15, 15);
+        this.type = step.getType();
+        this.uuid = UUID.randomUUID();
+
+        for (GProcXPort in : step.getInputs()) {
+            this.inputs.add(new InPort(in));
+        }
+        for (GProcXPort out : step.getOutputs()) {
+            this.outputs.add(new OutPort(out));
+        }
+
+        for (GProcXStep child : step.getChildren()) {
+            this.addChildren(frame, new GProcXStep(frame, child));
+        }
+        for (GProcXDoc doc : step.getDocs()) {
+            this.docs.add(new GProcXDoc(doc));
+        }
+        for (QName q : step.getQNames()) {
+            this.qnames.add(new QName(q));
+        }
+        for (QName ns : step.getNamespaces()) {
+            this.namespaces.add(new QName(ns));
+        }
+
+        this.isBuildin = step.isBuildin();
+        this.isAtomic = step.isAtomic();
+        this.outPipeFlag = true;
+    }
+
+    public GProcXStep() {
         this.uuid = UUID.randomUUID();
     }
 
@@ -67,6 +102,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
     }
 
     public boolean isBrief() {
+        if (this.type.equals("p:declare-step")) {
+            return false;
+        }
         for (GProcXPort input : inputs) {
             if (!input.isBasic()) {
                 return false;
@@ -89,20 +127,31 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
                 if (pipe == null) {
                     continue;
                 }
-                if (getPrimaryInport(this) == null) {
-                    continue;
+                pipe.setFromStep(this, true);
+
+                GProcXPort fromport = getPrimaryInport(this);
+                if (fromport == null || pipe.getToPort() == null) {
+                    pipe.clearFromPort();
+                } else if (fromport.isSequence() && !pipe.getToPort().isSequence()) {
+                    pipe.clearFromPort();
+                } else {
+                    pipe.setFromPort(fromport);
                 }
-                pipe.setFromPipeline(this, true);
-                pipe.setFromPort(getPrimaryInport(this));
             } else {
                 GProcXPipe pipe = getDefaultInPipe(this.getChildren().get(i));
                 if (pipe == null) {
                     continue;
                 }
-                if (getPrimaryOutport(this.getChildren().get(i - 1)) == null) {
-                    continue;
+                pipe.setFromStep(this.getChildren().get(i - 1), false);
+
+                GProcXPort fromport = getPrimaryOutport(this.getChildren().get(i - 1));
+                if (fromport == null || pipe.getToPort() == null) {
+                    pipe.clearFromPort();
+                } else if (fromport.isSequence() && !pipe.getToPort().isSequence()) {
+                    pipe.clearFromPort();
+                } else {
+                    pipe.setFromPort(fromport);
                 }
-                pipe.setFromPipeline(this.getChildren().get(i - 1), false);
                 pipe.setFromPort(getPrimaryOutport(this.getChildren().get(i - 1)));
             }
         }
@@ -111,17 +160,38 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
             if (getPrimaryOutport(this) != null) {
                 this.outPipe = new GProcXPipe();
                 this.outPipe.setDefault(true);
-                this.outPipe.setToPipeline(this, true);
-                this.outPipe.setToPort(getPrimaryOutport(this));
+                this.outPipe.setFromStep(null, true);
+                this.outPipe.setToStep(this, true);
+                GProcXPort toport = getPrimaryOutport(this);
+                if (toport == null) {
+                    this.outPipe.clearToPort();
+                } else {
+                    this.outPipe.setToPort(toport);
+                }
             } else {
                 return;
             }
         }
         if (this.outPipe != null) {
-            if (!this.getChildren().isEmpty()) {
-                if (getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)) != null) {
-                    this.outPipe.setFromPipeline(this.getChildren().get(this.getChildren().size() - 1), false);
-                    this.outPipe.setFromPort(getPrimaryOutport(this.getChildren().get(this.getChildren().size() - 1)));
+            if (this.getChildren().size() > 0) {
+                this.outPipe.setToStep(this, true);
+                GProcXPort toport = getPrimaryOutport(this);
+                if (toport == null) {
+                    this.outPipe.clearToPort();
+                } else {
+                    this.outPipe.setToPort(toport);
+                }
+
+                GProcXStep last = this.getChildren().get(this.getChildren().size() - 1);
+                this.outPipe.setFromStep(last, false);
+
+                GProcXPort fromport = getPrimaryOutport(last);
+                if (fromport == null || this.outPipe.getToPort() == null) {
+                    this.outPipe.clearFromPort();
+                } else if (fromport.isSequence() && !this.outPipe.getToPort().isSequence()) {
+                    this.outPipe.clearFromPort();
+                } else {
+                    this.outPipe.setFromPort(fromport);
                 }
             }
         }
@@ -138,19 +208,19 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return null;
     }
 
-    public static GProcXPipe getDefaultInPipe(GProcXPipeline pipeline) {
-        if (pipeline != null) {
-            GProcXPort primary = getPrimaryInport(pipeline);
+    public static GProcXPipe getDefaultInPipe(GProcXStep step) {
+        if (step != null) {
+            GProcXPort primary = getPrimaryInport(step);
             return getDefaultInPipe(primary);
         }
         return null;
     }
 
-    public void setParent(GProcXPipeline parent) {
+    public void setParent(GProcXStep parent) {
         this.parent = parent;
     }
 
-    public GProcXPipeline getParent() {
+    public GProcXStep getParent() {
         return parent;
     }
 
@@ -184,11 +254,11 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return null;
     }
 
-    public GProcXPipeline findPipeline(String name) {
+    public GProcXStep findStep(String name) {
         if (this.getName().equals(name)) {
             return this;
         }
-        for (GProcXPipeline child : this.children) {
+        for (GProcXStep child : this.children) {
             if (child.getName().equals(name)) {
                 return child;
             }
@@ -211,7 +281,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
     }
 
     public void setType(String type) {
-        this.type = new QName(type);
+        this.type = type;
     }
 
     public void addInput(GProcXPort input) {
@@ -263,12 +333,12 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
     }
 
     public void addPipe(XFrame frame, GProcXPipe pipe) {
-        if (hasPipe(pipe)) {
+        if (this.hasPipe(pipe)) {
             return;
         }
 
         // set the main out pipe
-        if (pipe.getToPipeline() == this) {
+        if (pipe.getToStep() == this) {
             for (GProcXPort outport : this.getOutputs()) {
                 if (outport.getPort().equals(pipe.getToPort().getPort())) {
                     outport.addPipe(pipe);
@@ -276,19 +346,22 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
                 }
             }
         } else {
-            for (GProcXPipeline child : this.getChildren()) {
-                // make sure the pipe matches the pipeline
-                if (child != pipe.getToPipeline()) {
+            for (GProcXStep child : this.getChildren()) {
+                // make sure the pipe matches the step
+                if (child != pipe.getToStep()) {
                     continue;
                 }
                 // match the port name with the pipe
                 if (child.getInputs().size() != 0) {
                     for (GProcXPort inport : child.getInputs()) {
 
-                        if (inport.getPort().equals(pipe.getToPort().getPort())) {
-                            inport.addPipe(pipe);
-                            break;
+                        if (pipe.getToPort() != null) {
+                            if (inport.getPort().equals(pipe.getToPort().getPort())) {
+                                inport.addPipe(pipe);
+                                break;
+                            }
                         }
+
                     }
                 }
             }
@@ -306,11 +379,11 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         isBuildin = buildin;
     }
 
-    public String getType() { return type.getLexical(); }
+    public String getType() { return type; }
 
-    public static GProcXPort getPrimaryInport(GProcXPipeline pipeline) {
-        if (pipeline != null) {
-            for (GProcXPort inport : pipeline.getInputs()) {
+    public static GProcXPort getPrimaryInport(GProcXStep step) {
+        if (step != null) {
+            for (GProcXPort inport : step.getInputs()) {
                 if (inport.isPrimary()) {
                     return inport;
                 }
@@ -319,9 +392,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return null;
     }
 
-    public static GProcXPort getPrimaryOutport(GProcXPipeline pipeline) {
-        if (pipeline != null) {
-            for (GProcXPort outport : pipeline.getOutputs()) {
+    public static GProcXPort getPrimaryOutport(GProcXStep step) {
+        if (step != null) {
+            for (GProcXPort outport : step.getOutputs()) {
                 if (outport.isPrimary()) {
                     return outport;
                 }
@@ -330,9 +403,9 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return null;
     }
 
-    // sort the child pipelines, and return the first child
+    // sort the child steps, and return the first child
     // if there is no child, return self
-    public GProcXPipeline sortChildren() {
+    public GProcXStep sortChildren() {
         if (this.getChildren().size() == 0) {
             return this;
         } else {
@@ -341,10 +414,10 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return this.getChildren().get(0);
     }
 
-    public int compareTo(GProcXPipeline pipeline) {
-        if (this.getY() < pipeline.getY()) {
+    public int compareTo(GProcXStep step) {
+        if (this.getY() < step.getY()) {
             return -1;
-        } else if (this.getY() > pipeline.getY()) {
+        } else if (this.getY() > step.getY()) {
             return 1;
         }
         return 0;
@@ -356,26 +429,55 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         }
     }
 
-    public void deleteChild(GProcXPipeline child) {
+    public void deleteChild(GProcXStep child) {
         ArrayList<GProcXPipe> pipeWL = new ArrayList<GProcXPipe>();
 
         for (GProcXPipe pipe : this.getPipes()) {
-            if (pipe.getFromPipeline().getUUID() == child.getUUID()) {
-                pipe.setFromPipeline(null, false);
-                pipe.setFromPort(null);
+            if (pipe.getFromStep() != null) {
+                if (pipe.getFromStep().getUUID() == child.getUUID()) {
+                    pipe.setFromStep(null, false);
+                    pipe.setFromPort(null);
+                }
             }
-            if (pipe.getToPipeline().getUUID() == child.getUUID()) {
-                pipeWL.add(pipe);
+
+            if (pipe.getToStep() != null) {
+                if (pipe.getToStep().getUUID() == child.getUUID()) {
+                    pipeWL.add(pipe);
+                }
             }
         }
         for (GProcXPipe pipe : pipeWL) {
             this.getPipes().remove(pipe);
         }
-        if (this.outPipe.getFromPipeline().getUUID() == child.getUUID()) {
-            this.outPipe = null;
+        if (this.outPipe.getFromStep() != null) {
+            if (this.outPipe.getFromStep().getUUID() == child.getUUID()) {
+                this.outPipe = null;
+            }
         }
 
         this.getChildren().remove(child);
+    }
+
+    public void deletePipe(GProcXPipe pipe) {
+        for (GProcXStep child : this.getChildren()) {
+            if (child != pipe.getToStep()) {
+                continue;
+            }
+            // match the port name with the pipe
+            if (child.getInputs().size() != 0) {
+                for (GProcXPort inport : child.getInputs()) {
+
+                    if (pipe.getToPort() != null) {
+                        if (inport.getPort().equals(pipe.getToPort().getPort())) {
+                            inport.getPipes().remove(pipe);
+                            this.getPipes().remove(pipe);
+                            return;
+                        }
+                    }
+
+                }
+            }
+        }
     }
 
     public void addQName(QName q) {
@@ -420,7 +522,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return false;
     }
 
-    public ArrayList<GProcXPipeline> getChildren() {
+    public ArrayList<GProcXStep> getChildren() {
         return children;
     }
 
@@ -433,14 +535,18 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return "";
     }
 
-    public void addChildren(XFrame frame, GProcXPipeline step) {
+    public void addChildren(XFrame frame, GProcXStep step) {
         step.setParent(this);
 
         GProcXPipe pipe = new GProcXPipe();
         this.children.add(step);
 
-        pipe.setToPipeline(step, false);
-        pipe.setToPort(getPrimaryInport(step));
+        pipe.setToStep(step, false);
+        if (getPrimaryInport(step) == null) {
+            pipe.clearToPort();
+        } else {
+            pipe.setToPort(getPrimaryInport(step));
+        }
         pipe.setDefault(true);
         this.addPipe(frame, pipe);
     }
@@ -497,7 +603,7 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         int xText = this.x - metrics.stringWidth(this.getType()) / 2;
         int yText = this.y - metrics.getHeight() / 2 + metrics.getAscent();
 
-        if (frame.getSelectedPipeline().getUUID() == this.getUUID()) {
+        if (frame.getSelectedStep().getUUID() == this.getUUID()) {
             g2.setColor(new Color(255,0,0));
             g2.draw(shape);
             g2.drawString(this.getType(), xText, yText);
@@ -510,14 +616,16 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
     }
 
     public void drawChildren(XFrame frame, Graphics2D g2, FontMetrics metrics) {
-        for (GProcXPipeline child : children) {
+        for (GProcXStep child : children) {
             child.drawSelf(frame, g2, metrics);
         }
     }
 
     public void drawPipes(Graphics2D g2) {
         for (GProcXPipe pipe : pipes) {
-            pipe.draw(g2);
+            if (pipe.isValid()) {
+                pipe.draw(g2);
+            }
         }
         if (this.outPipe != null) {
             if (this.outPipe.isValid()) {
@@ -556,8 +664,8 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
         return false;
     }
 
-    public GProcXPipeline findChild(Point2D p) {
-        for (GProcXPipeline child : children) {
+    public GProcXStep findChild(Point2D p) {
+        for (GProcXStep child : children) {
             if (child.contains(p)) {
                 return child;
             }
@@ -575,23 +683,35 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
 
         code += "<" + getType();
 
-        for (QName namespace : this.namespaces) {
+        for (QName namespace : this.getNamespaces()) {
             if (!hasDefineNS(namespace)) {
                 if (!namespace.getValue().equals("")) {
-                    code += " " + namespace;
+                    code += " " + namespace.toString();
                 }
             }
         }
 
-        for (QName qname : this.qnames) {
-            if (!qname.getValue().equals("")) {
-                code += " " + qname;
+        boolean firstFlag = true;
+        for (int i = 0; i < this.getQNames().size(); i++) {
+            if (!this.getQNames().get(i).getValue().equals("")) {
+                if (!firstFlag) {
+                    code += "\n                    ";
+                    for (int j = 0; j < retract; j++) {
+                        code += "    ";
+                    }
+                    code += this.getQNames().get(i).toString();
+                } else {
+                    code += " " + this.getQNames().get(i).toString();
+                    firstFlag = false;
+                }
             }
         }
 
 
         if (this.isAtomic && this.isBrief()) {
-                    code += "/>\n";
+            code += "/>\n";
+        } else if (!this.isAtomic && this.isBrief() && this.getChildren().isEmpty()) {
+            code += "/>\n";
         } else {
             code += ">\n";
 
@@ -602,19 +722,25 @@ public class GProcXPipeline implements Comparable<GProcXPipeline>, Serializable 
             }
 
             for (GProcXPort inPort : this.inputs) {
+                if (inPort.isBasic() && !this.getType().equals("p:declare-step")) {
+                    continue;
+                }
                 code += inPort.toString(retract + 1);
             }
 
             if (!isAtomic) {
                 for (GProcXPort outPort : this.outputs) {
+                    if (outPort.isBasic() && !this.getType().equals("p:declare-step")) {
+                        continue;
+                    }
                     code += outPort.toString(retract + 1);
                 }
                 code += "\n";
             }
 
             // print children pipelines
-            for (GProcXPipeline pipeline : this.children) {
-                code += pipeline.toString(retract + 1);
+            for (GProcXStep step : this.children) {
+                code += step.toString(retract + 1);
             }
 
 

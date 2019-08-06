@@ -3,7 +3,7 @@ package gprocx.mainUI;
 import gprocx.core.*;
 import gprocx.step.GProcXDoc;
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -22,16 +22,24 @@ public class XConfigTabs extends JTabbedPane {
     private JPanel pipeChildPanel;
 
     // variables for specification panel
-    private JPanel basicPanel;
+    private JPanel docPanel;
     private JPanel nsPanel;
     private JPanel requiredElePanel;
     private JPanel otherElePanel;
+    private SpringLayout docLayout;
+    private SpringLayout nsLayout;
+    private SpringLayout reqLayout;
+    private SpringLayout othLayout;
     // for io panel
     private JPanel inputPanel;
     private JPanel outputPanel;
+    private SpringLayout inLayout;
+    private SpringLayout outLayout;
     // for pipe child panel
     private JPanel pipePanel;
     private JPanel childPanel;
+    private SpringLayout pipeLayout;
+    private SpringLayout childLayout;
 
 
     public XConfigTabs(XFrame frame) {
@@ -41,9 +49,9 @@ public class XConfigTabs extends JTabbedPane {
         setIOPanel();
         setPipeChildPanel();
 
-        this.addTab("Specification", this.specPanel);
-        this.addTab("I/O ports", this.ioPanel);
-        this.addTab("Pipe & Subpipeline", this.pipeChildPanel);
+        this.addTab("Basic", this.specPanel);
+        this.addTab("I/O port", this.ioPanel);
+        this.addTab("Pipe & Step", this.pipeChildPanel);
     }
 
     public void setSpecPanel() {
@@ -55,35 +63,39 @@ public class XConfigTabs extends JTabbedPane {
 
 
         // information panel
-        this.basicPanel = new JPanel();
-        this.basicPanel.setBorder(new TitledBorder("Basic information"));
-        this.basicPanel.setLayout(new GridLayout(10,1));
-        this.basicPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
+        this.docPanel = new JPanel();
+        this.docPanel.setBorder(new TitledBorder("Documentation"));
+        this.docLayout = new SpringLayout();
+        this.docPanel.setLayout(this.docLayout);
+        this.docPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/5));
 
         // namespaces
         this.nsPanel = new JPanel();
-        this.nsPanel.setBorder(new TitledBorder("Namespaces"));
-        this.nsPanel.setLayout(new GridLayout(5,1));
+        this.nsPanel.setBorder(new TitledBorder("Namespace"));
+        this.nsLayout = new SpringLayout();
+        this.nsPanel.setLayout(this.nsLayout);
         this.nsPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/10));
 
         // required QNames
         this.requiredElePanel = new JPanel();
-        this.requiredElePanel.setBorder(new TitledBorder("Required elements"));
-        this.requiredElePanel.setLayout(new GridLayout(5,1));
+        this.requiredElePanel.setBorder(new TitledBorder("Required attribute"));
+        this.reqLayout = new SpringLayout();
+        this.requiredElePanel.setLayout(this.reqLayout);
         this.requiredElePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/10));
 
         // none required QNames
         this.otherElePanel = new JPanel();
-        this.otherElePanel.setBorder(new TitledBorder("Other elements"));
-        this.otherElePanel.setLayout(new GridLayout(35,1));
+        this.otherElePanel.setBorder(new TitledBorder("Other attribute"));
+        this.othLayout = new SpringLayout();
+        this.otherElePanel.setLayout(this.othLayout);
         this.otherElePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height*5/10));
 
 
-        this.specPanel.add(this.basicPanel);
+        this.specPanel.add(this.docPanel);
         this.specPanel.add(this.nsPanel);
         this.specPanel.add(this.requiredElePanel);
         this.specPanel.add(this.otherElePanel);
@@ -98,13 +110,15 @@ public class XConfigTabs extends JTabbedPane {
         // I/O panels of the specific panel
         this.inputPanel = new JPanel();
         this.inputPanel.setBorder(new TitledBorder("Input port"));
-        this.inputPanel.setLayout(new GridLayout(30,1));
+        this.inLayout = new SpringLayout();
+        this.inputPanel.setLayout(this.inLayout);
         this.inputPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
         this.outputPanel = new JPanel();
         this.outputPanel.setBorder(new TitledBorder("Output port"));
-        this.outputPanel.setLayout(new GridLayout(30,1));
+        this.outLayout = new SpringLayout();
+        this.outputPanel.setLayout(this.outLayout);
         this.outputPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
@@ -121,14 +135,16 @@ public class XConfigTabs extends JTabbedPane {
         // panel for pipes
         this.pipePanel = new JPanel();
         this.pipePanel.setBorder(new TitledBorder("Pipe"));
-        this.pipePanel.setLayout(new GridLayout(30,1));
+        this.pipeLayout = new SpringLayout();
+        this.pipePanel.setLayout(this.pipeLayout);
         this.pipePanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
         // panel for subpipelines
         this.childPanel = new JPanel();
-        this.childPanel.setBorder(new TitledBorder("Subpipeline"));
-        this.childPanel.setLayout(new GridLayout(30,1));
+        this.childPanel.setBorder(new TitledBorder("Step"));
+        this.childLayout = new SpringLayout();
+        this.childPanel.setLayout(this.childLayout);
         this.childPanel.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/5,
                 Toolkit.getDefaultToolkit().getScreenSize().height/2));
 
@@ -138,145 +154,283 @@ public class XConfigTabs extends JTabbedPane {
     }
 
     public void updateInfo() {
-        if (this.frame.getSelectedPipeline() != null) {
-            GProcXPipeline selected = this.frame.getSelectedPipeline();
-
-            //this.enterType.setText(selected.getType());
+        if (this.frame.getSelectedStep() != null) {
+            GProcXStep selected = this.frame.getSelectedStep();
 
             // set docs
-            this.basicPanel.removeAll();
+            this.docPanel.removeAll();
+            Spring docNorth = Spring.constant(0);
+            SpringLayout.Constraints docBoxCons = null;
+            SpringLayout.Constraints docTextCons = null;
             for (GProcXDoc doc : selected.getDocs()) {
-                this.basicPanel.add(this.newDocBox(doc), BorderLayout.WEST);
-                JLabel tempDoc = this.createJLabelWithWrapWidth(40, new JLabel(doc.getContent()));
-                this.basicPanel.add(tempDoc);
+                Box docBox = this.newDocBox(doc);
+                this.docPanel.add(docBox);
+                JLabel docText = this.createJLabelWithWrapWidth(Toolkit.getDefaultToolkit().getScreenSize().width*19/100, new JLabel(doc.getContent()));
+                this.docPanel.add(docText);
 
-                this.basicPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+                docBoxCons = docLayout.getConstraints(docBox);
+                docTextCons = docLayout.getConstraints(docText);
+
+                docBoxCons.setX(Spring.constant(5));
+                docBoxCons.setY(Spring.sum(docNorth, Spring.constant(3)));
+                docNorth = docBoxCons.getConstraint(SpringLayout.SOUTH);
+
+                docTextCons.setX(Spring.constant(15));
+                docTextCons.setY(Spring.sum(docNorth, Spring.constant(3)));
+                docNorth = Spring.sum(docTextCons.getConstraint(SpringLayout.SOUTH), Spring.constant(5));
             }
-            JButton addDocButtion = new JButton("New info");
-            addDocButtion.addActionListener(new AddDocListener());
-            this.basicPanel.add(addDocButtion, BorderLayout.SOUTH);
+            if (!selected.isBuildin()) {
+                JButton docButtion = new JButton("New");
+                docButtion.addActionListener(new AddDocListener());
+                this.docPanel.add(docButtion);
 
+                SpringLayout.Constraints docButtonCons = docLayout.getConstraints(docButtion);
+                docButtonCons.setX(Spring.constant(5));
+                docButtonCons.setY(Spring.sum(docNorth, Spring.constant(15)));
+            }
 
             // set namespaces
             this.nsPanel.removeAll();
+            Spring nsNorth = Spring.constant(0);
+            SpringLayout.Constraints nsBoxCons = null;
             for (QName ns : selected.getNamespaces()) {
-                this.nsPanel.add(this.newNamespaceBox(ns), BorderLayout.WEST);
+                Box nsBox = this.newNamespaceBox(ns);
+                this.nsPanel.add(nsBox);
+
+                nsBoxCons = nsLayout.getConstraints(nsBox);
+
+                nsBoxCons.setX(Spring.constant(5));
+                nsBoxCons.setY(Spring.sum(nsNorth, Spring.constant(3)));
+                nsNorth = nsBoxCons.getConstraint(SpringLayout.SOUTH);
             }
+            JButton nsButton = new JButton("New");
+            nsButton.addActionListener(new AddNSListener());
+            this.nsPanel.add(nsButton);
 
-            JButton addNSButton = new JButton("Add");
-            addNSButton.addActionListener(new AddNSListener());
-            this.nsPanel.add(addNSButton, BorderLayout.SOUTH);
-
+            SpringLayout.Constraints nsButtonCons = this.nsLayout.getConstraints(nsButton);
+            nsButtonCons.setX(Spring.constant(5));
+            nsButtonCons.setY(Spring.sum(nsNorth, Spring.constant(15)));
 
             // set qnames
             this.requiredElePanel.removeAll();
+            Spring reqNorth = Spring.constant(0);
+            SpringLayout.Constraints reqBoxCons = null;
             for (QName qname : selected.getQNames()) {
                 if (qname.isRequired()) {
-                    this.requiredElePanel.add(this.newElementBox(selected.getQNames(), qname), BorderLayout.WEST);
+                    Box reqBox = this.newElementBox(selected.getQNames(), qname);
+                    this.requiredElePanel.add(reqBox);
+
+                    reqBoxCons = reqLayout.getConstraints(reqBox);
+
+                    reqBoxCons.setX(Spring.constant(5));
+                    reqBoxCons.setY(Spring.sum(reqNorth, Spring.constant(3)));
+                    reqNorth = reqBoxCons.getConstraint(SpringLayout.SOUTH);
                 }
             }
             if (!selected.isBuildin()) {
-                JButton addElementButton = new JButton("Add");
-                addElementButton.addActionListener(new AddElementListener());
-                this.requiredElePanel.add(addElementButton, BorderLayout.SOUTH);
+                JButton elementButton = new JButton("New");
+                elementButton.addActionListener(new AddElementListener());
+                this.requiredElePanel.add(elementButton);
+
+                SpringLayout.Constraints reqButtonCons = this.reqLayout.getConstraints(elementButton);
+                reqButtonCons.setX(Spring.constant(5));
+                reqButtonCons.setY(Spring.sum(reqNorth, Spring.constant(15)));
             }
 
             this.otherElePanel.removeAll();
+            Spring othNorth = Spring.constant(0);
+            SpringLayout.Constraints othBoxCons = null;
             for (QName qname : selected.getQNames()) {
                 if (!qname.isRequired()) {
-                    this.otherElePanel.add(this.newElementBox(selected.getQNames(), qname), BorderLayout.WEST);
+                    Box othBox = this.newElementBox(selected.getQNames(), qname);
+                    this.otherElePanel.add(othBox);
+                    othBoxCons = othLayout.getConstraints(othBox);
+
+                    othBoxCons.setX(Spring.constant(5));
+                    othBoxCons.setY(Spring.sum(othNorth, Spring.constant(3)));
+                    othNorth = othBoxCons.getConstraint(SpringLayout.SOUTH);
                 }
             }
             if (!selected.isBuildin()) {
-                JButton addElementButton = new JButton("Add");
-                addElementButton.addActionListener(new AddElementListener());
-                this.otherElePanel.add(addElementButton, BorderLayout.SOUTH);
+                JButton elementButton = new JButton("New");
+                elementButton.addActionListener(new AddElementListener());
+                this.otherElePanel.add(elementButton);
+
+                SpringLayout.Constraints othButtonCons = this.othLayout.getConstraints(elementButton);
+                othButtonCons.setX(Spring.constant(5));
+                othButtonCons.setY(Spring.sum(othNorth, Spring.constant(15)));
             }
 
 
             // set inputs
             this.inputPanel.removeAll();
-            this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+            Spring inNorth = Spring.constant(0);
+            SpringLayout.Constraints inBoxCons01 = null;
+            SpringLayout.Constraints inBoxCons02 = null;
+            SpringLayout.Constraints inBoxCons03 = null;
             for (GProcXPort port : selected.getInputs()) {
-                this.inputPanel.add(this.newInBox01(port));
-                this.inputPanel.add(this.newInBox02(port));
-                this.inputPanel.add(this.newInBox03(port));
+                Box inBox01 = this.newInBox01(port);
+                Box inBox02 = this.newInBox02(port);
+                Box inBox03 = this.newInBox03(port);
+                this.inputPanel.add(inBox01);
+                this.inputPanel.add(inBox02);
+                this.inputPanel.add(inBox03);
+                inBoxCons01 = inLayout.getConstraints(inBox01);
+                inBoxCons02 = inLayout.getConstraints(inBox02);
+                inBoxCons03 = inLayout.getConstraints(inBox03);
 
-                for (IOSource source : port.getSources()) {
-                    Box newBox = Box.createHorizontalBox();
-                    newBox.add(Box.createHorizontalStrut(10));
-                    newBox.add(new DeleteSourceButton(port, source, "Delete source"));
-                    newBox.add(Box.createHorizontalStrut(30));
-                    newBox.add(new JLabel("Source type: " + source.getSourceType()));
-                    this.inputPanel.add(newBox);
+                inBoxCons01.setX(Spring.constant(5));
+                inBoxCons01.setY(Spring.sum(inNorth, Spring.constant(3)));
+                inNorth = inBoxCons01.getConstraint(SpringLayout.SOUTH);
 
-                    for (QName qname : source.getQNames()) {
-                        this.inputPanel.add(this.newElementBox(source.getQNames(), qname));
+                inBoxCons02.setX(Spring.constant(5));
+                inBoxCons02.setY(Spring.sum(inNorth, Spring.constant(3)));
+                inNorth = inBoxCons02.getConstraint(SpringLayout.SOUTH);
+
+                inBoxCons03.setX(Spring.constant(5));
+                inBoxCons03.setY(Spring.sum(inNorth, Spring.constant(3)));
+                inNorth = inBoxCons03.getConstraint(SpringLayout.SOUTH);
+
+                SpringLayout.Constraints sourceCons = null;
+                for (final IOSource source : port.getSources()) {
+                    Box sourceBox = Box.createHorizontalBox();
+                    if (source.getSourceType().equals("p:inline")) {
+                        JButton inlineButtion = new JButton("Edit inline");
+                        inlineButtion.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+                                new InlineDialog(null, source);
+                            }
+                        });
+                        sourceBox.add(inlineButtion);
+                        sourceBox.add(Box.createHorizontalStrut(10));
                     }
+                    sourceBox.add(new DeleteSourceButton(port, source, "Delete source"));
+                    sourceBox.add(Box.createHorizontalStrut(30));
+                    sourceBox.add(new JLabel("Type - " + source.getSourceType()));
+                    this.inputPanel.add(sourceBox);
+                    sourceCons = inLayout.getConstraints(sourceBox);
+
+                    sourceCons.setX(Spring.constant(5));
+                    sourceCons.setY(Spring.sum(inNorth, Spring.constant(3)));
+                    inNorth = sourceCons.getConstraint(SpringLayout.SOUTH);
+
+                    SpringLayout.Constraints qnameCons = null;
+                    for (QName qname : source.getQNames()) {
+                        Box qBox = this.newElementBox(source.getQNames(), qname);
+                        this.inputPanel.add(qBox);
+                        qnameCons = inLayout.getConstraints(qBox);
+
+                        qnameCons.setX(Spring.constant(5));
+                        qnameCons.setY(Spring.sum(inNorth, Spring.constant(3)));
+                        inNorth = qnameCons.getConstraint(SpringLayout.SOUTH);
+                    }
+                    inNorth = Spring.sum(inNorth, Spring.constant(10));
                 }
 
-                this.inputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+                inNorth = Spring.sum(inNorth, Spring.constant(20));
             }
+
             if (!selected.isBuildin()) {
-                JButton addPortButtion = new JButton("New port");
-                addPortButtion.addActionListener(new AddInPortListener());
-                this.inputPanel.add(addPortButtion, BorderLayout.SOUTH);
+                JButton inportButtion = new JButton("New port");
+                inportButtion.addActionListener(new AddInPortListener());
+                this.inputPanel.add(inportButtion);
+
+                SpringLayout.Constraints inportButtonCons = this.inLayout.getConstraints(inportButtion);
+                inportButtonCons.setX(Spring.constant(5));
+                inportButtonCons.setY(Spring.sum(inNorth, Spring.constant(-10)));
             }
 
 
             // set outputs
             this.outputPanel.removeAll();
-            this.outputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+            Spring outNorth = Spring.constant(0);
+            SpringLayout.Constraints outBoxCons01 = null;
+            SpringLayout.Constraints outBoxCons02 = null;
+            SpringLayout.Constraints outBoxCons03 = null;
             for (GProcXPort port : selected.getOutputs()) {
-                this.outputPanel.add(this.newOutBox01(port));
-                this.outputPanel.add(this.newInBox02(port));
-                this.outputPanel.add(this.newInBox03(port));
+                Box outBox01 = this.newOutBox01(port);
+                Box outBox02 = this.newInBox02(port);
+                Box outBox03 = this.newInBox03(port);
+                this.outputPanel.add(outBox01);
+                this.outputPanel.add(outBox02);
+                this.outputPanel.add(outBox03);
+                outBoxCons01 = outLayout.getConstraints(outBox01);
+                outBoxCons02 = outLayout.getConstraints(outBox02);
+                outBoxCons03 = outLayout.getConstraints(outBox03);
 
-                for (IOSource source : port.getSources()) {
-                    Box newBox = Box.createHorizontalBox();
-                    newBox.add(Box.createHorizontalStrut(10));
-                    newBox.add(new DeleteSourceButton(port, source, "Delete source"));
-                    newBox.add(Box.createHorizontalStrut(30));
-                    newBox.add(new JLabel("Source type: " + source.getSourceType()));
-                    this.outputPanel.add(newBox);
+                outBoxCons01.setX(Spring.constant(5));
+                outBoxCons01.setY(Spring.sum(outNorth, Spring.constant(3)));
+                outNorth = outBoxCons01.getConstraint(SpringLayout.SOUTH);
 
-                    for (QName qname : source.getQNames()) {
-                        this.outputPanel.add(this.newElementBox(source.getQNames(), qname));
-                    }
-                }
+                outBoxCons02.setX(Spring.constant(5));
+                outBoxCons02.setY(Spring.sum(outNorth, Spring.constant(3)));
+                outNorth = outBoxCons02.getConstraint(SpringLayout.SOUTH);
 
-                this.outputPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+                outBoxCons03.setX(Spring.constant(5));
+                outBoxCons03.setY(Spring.sum(outNorth, Spring.constant(3)));
+                outNorth = outBoxCons03.getConstraint(SpringLayout.SOUTH);
+
+                outNorth = Spring.sum(outNorth, Spring.constant(30));
             }
             if (!selected.isBuildin()) {
-                JButton addPortButtion = new JButton("New port");
-                addPortButtion.addActionListener(new AddOutPortListener());
-                this.outputPanel.add(addPortButtion, BorderLayout.SOUTH);
+                JButton outPortButtion = new JButton("New port");
+                outPortButtion.addActionListener(new AddOutPortListener());
+                this.outputPanel.add(outPortButtion, BorderLayout.SOUTH);
+
+                SpringLayout.Constraints outportButtonCons = this.outLayout.getConstraints(outPortButtion);
+                outportButtonCons.setX(Spring.constant(5));
+                outportButtonCons.setY(Spring.sum(outNorth, Spring.constant(-10)));
             }
 
 
             // set pipes
             this.pipePanel.removeAll();
+            Spring pipeNorth = Spring.constant(0);
+            SpringLayout.Constraints pipeBoxCons = null;
             for (GProcXPipe pipe : selected.getPipes()) {
                 if (pipe.isValid()) {
-                    this.pipePanel.add(this.newPipeBox(pipe), BorderLayout.WEST);
+                    Box pipeBox = this.newPipeBox(pipe);
+                    this.pipePanel.add(pipeBox);
+                    pipeBoxCons = pipeLayout.getConstraints(pipeBox);
+
+                    pipeBoxCons.setX(Spring.constant(5));
+                    pipeBoxCons.setY(Spring.sum(pipeNorth, Spring.constant(3)));
+                    pipeNorth = pipeBoxCons.getConstraint(SpringLayout.SOUTH);
                 }
             }
-            if (frame.getMainPipeline().getOutPipe() != null) {
-                if (frame.getMainPipeline().getOutPipe().isValid()) {
-                    this.pipePanel.add(this.newPipeBox(frame.getMainPipeline().getOutPipe()));
+            if (frame.getSelectedStep().getOutPipe() != null) {
+                if (frame.getSelectedStep().getOutPipe().isValid()) {
+                    Box pipeBox = this.newPipeBox(frame.getSelectedStep().getOutPipe());
+                    this.pipePanel.add(pipeBox);
+                    pipeBoxCons = pipeLayout.getConstraints(pipeBox);
+
+                    pipeBoxCons.setX(Spring.constant(5));
+                    pipeBoxCons.setY(Spring.sum(pipeNorth, Spring.constant(3)));
+                    pipeNorth = pipeBoxCons.getConstraint(SpringLayout.SOUTH);
                 }
             }
-            JButton addPipeButton = new JButton("New pipe");
-            addPipeButton.addActionListener(new XMenuBar.PipeMenu(this.frame));
-            this.pipePanel.add(addPipeButton, BorderLayout.SOUTH);
+            JButton pipeButton = new JButton("New pipe");
+            pipeButton.addActionListener(new XMenuBar.PipeMenu(this.frame));
+            this.pipePanel.add(pipeButton);
+
+            SpringLayout.Constraints pipeButtonCons = this.pipeLayout.getConstraints(pipeButton);
+            pipeButtonCons.setX(Spring.constant(5));
+            pipeButtonCons.setY(Spring.sum(pipeNorth, Spring.constant(15)));
 
 
             // set subpipelines
             this.childPanel.removeAll();
-            for (GProcXPipeline child : selected.getChildren()) {
-                this.childPanel.add(this.newSubpipelineBox(child), BorderLayout.WEST);
-            }
+            Spring childNorth = Spring.constant(0);
+            SpringLayout.Constraints childBoxCons = null;
+            for (GProcXStep child : selected.getChildren()) {
+                Box childBox = this.newSubpipelineBox(child);
+                this.childPanel.add(childBox);
+                childBoxCons = childLayout.getConstraints(childBox);
 
+                childBoxCons.setX(Spring.constant(5));
+                childBoxCons.setY(Spring.sum(childNorth, Spring.constant(3)));
+                childNorth = childBoxCons.getConstraint(SpringLayout.SOUTH);
+            }
 
             this.repaint();
         }
@@ -284,7 +438,6 @@ public class XConfigTabs extends JTabbedPane {
 
     private Box newDocBox(GProcXDoc doc) {
         Box newBox = Box.createHorizontalBox();
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new EditDocButton(doc, "Edit"), BorderLayout.WEST);
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteDocButton(doc, "Delete"));
@@ -295,18 +448,16 @@ public class XConfigTabs extends JTabbedPane {
 
     private Box newNamespaceBox(QName qname) {
         Box newBox = Box.createHorizontalBox();
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new EditElementButton(qname,"Edit"), BorderLayout.WEST);
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteNSButton(qname,"Delete"));
         newBox.add(Box.createHorizontalStrut(10));
-        newBox.add(new JLabel(qname.toString()));
+        newBox.add(new JLabel(qname.toString().substring(6)));
         return newBox;
     }
 
     private Box newElementBox(ArrayList<QName> qnames, QName qname) {
         Box newBox = Box.createHorizontalBox();
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new EditElementButton(qname,"Edit"), BorderLayout.WEST);
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteElementButton(qnames, qname,"Delete"));
@@ -318,12 +469,11 @@ public class XConfigTabs extends JTabbedPane {
     private Box newInBox01(GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new AddSourceButton(port,"Insert source"));
         newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteInPortButton(port,"Delete port"));
         newBox.add(Box.createHorizontalStrut(30));
-        newBox.add(new JLabel(port.getPort()));
+        newBox.add(new JLabel("port=\"" + port.getPort() + "\""));
 
         return newBox;
     }
@@ -331,10 +481,9 @@ public class XConfigTabs extends JTabbedPane {
     private Box newOutBox01(GProcXPort port) {
         Box newBox = Box.createHorizontalBox();
 
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteOutPortButton(port,"Delete port"));
         newBox.add(Box.createHorizontalStrut(30));
-        newBox.add(new JLabel(port.getPort()));
+        newBox.add(new JLabel("port=\"" + port.getPort() + "\""));
 
         return newBox;
     }
@@ -348,19 +497,6 @@ public class XConfigTabs extends JTabbedPane {
         primaryGroup.add(trueButton);
         primaryGroup.add(falseButton);
 
-        if (!frame.getSelectedPipeline().isAtomic()) {
-            trueButton.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    port.setPrimary(true);
-                }
-            });
-            falseButton.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    port.setPrimary(false);
-                }
-            });
-        }
-
         // update the status
         if (port.isPrimary()) {
             trueButton.setSelected(true);
@@ -368,6 +504,24 @@ public class XConfigTabs extends JTabbedPane {
         } else {
             trueButton.setSelected(false);
             falseButton.setSelected(true);
+        }
+
+        if (!frame.getSelectedStep().isBuildin()) {
+            trueButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setPrimary(true);
+                    frame.updateSequence();
+                }
+            });
+            falseButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setPrimary(false);
+                    frame.updateSequence();
+                }
+            });
+        } else {
+            trueButton.setEnabled(false);
+            falseButton.setEnabled(false);
         }
 
         newBox.add(Box.createHorizontalStrut(10));
@@ -389,19 +543,6 @@ public class XConfigTabs extends JTabbedPane {
         primaryGroup.add(trueButton);
         primaryGroup.add(falseButton);
 
-        if (!frame.getSelectedPipeline().isAtomic()) {
-            trueButton.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    port.setSequence(true);
-                }
-            });
-            falseButton.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    port.setSequence(false);
-                }
-            });
-        }
-
         // update the selection status
         if (port.isSequence()) {
             trueButton.setSelected(true);
@@ -409,6 +550,24 @@ public class XConfigTabs extends JTabbedPane {
         } else {
             trueButton.setSelected(false);
             falseButton.setSelected(true);
+        }
+
+        if (!frame.getSelectedStep().isAtomic()) {
+            trueButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setSequence(true);
+                    frame.updateSequence();
+                }
+            });
+            falseButton.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    port.setSequence(false);
+                    frame.updateSequence();
+                }
+            });
+        } else {
+            trueButton.setEnabled(false);
+            falseButton.setEnabled(false);
         }
 
         newBox.add(Box.createHorizontalStrut(10));
@@ -423,19 +582,21 @@ public class XConfigTabs extends JTabbedPane {
 
     private Box newPipeBox(GProcXPipe pipe) {
         Box newBox = Box.createHorizontalBox();
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeletePipeButton(pipe, "Delete"));
         newBox.add(Box.createHorizontalStrut(10));
-        newBox.add(new JLabel(pipe.getInfo()));
+        if (pipe.isDefault()) {
+            newBox.add(new JLabel("*" + pipe.getInfo()));
+        } else {
+            newBox.add(new JLabel(pipe.getInfo()));
+        }
         return newBox;
     }
 
-    private Box newSubpipelineBox(GProcXPipeline child) {
+    private Box newSubpipelineBox(GProcXStep child) {
         Box newBox = Box.createHorizontalBox();
-        newBox.add(Box.createHorizontalStrut(10));
         newBox.add(new DeleteSubpipelineButton(child, "Delete"));
         newBox.add(Box.createHorizontalStrut(10));
-        newBox.add(new JLabel(child.getType() + " (" + child.getName() + ")"));
+        newBox.add(new JLabel(child.getType() + " - name=\"" + child.getName() + "\""));
         return newBox;
     }
 
@@ -464,15 +625,7 @@ public class XConfigTabs extends JTabbedPane {
             this.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
-                    String inputContent = JOptionPane.showInputDialog(
-                            null,
-                            doc.getType(),
-                            doc.getContent()
-                    );
-                    if (inputContent != null) {
-                        doc.setContent(inputContent);
-                        frame.updateInfo();
-                    }
+                    new DocInputDialog(null, doc);
                 }
             });
         }
@@ -507,8 +660,8 @@ public class XConfigTabs extends JTabbedPane {
             this.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
-                    if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isBuildin()) {
+                    if (frame.getSelectedStep() != null) {
+                        if (frame.getSelectedStep().isBuildin()) {
                             frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
@@ -519,7 +672,7 @@ public class XConfigTabs extends JTabbedPane {
                             );
 
                             if (result == 0) {
-                                frame.getSelectedPipeline().getDocs().remove(doc);
+                                frame.getSelectedStep().getDocs().remove(doc);
                                 frame.updateInfo();
                             }
                         }
@@ -538,8 +691,8 @@ public class XConfigTabs extends JTabbedPane {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isBuildin()) {
+                    if (frame.getSelectedStep() != null) {
+                        if (frame.getSelectedStep().isBuildin()) {
                             frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
@@ -569,7 +722,7 @@ public class XConfigTabs extends JTabbedPane {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
+                    if (frame.getSelectedStep() != null) {
 
                         int result = JOptionPane.showConfirmDialog(
                                 null,
@@ -579,7 +732,7 @@ public class XConfigTabs extends JTabbedPane {
                         );
 
                         if (result == 0) {
-                            frame.getSelectedPipeline().getNamespaces().remove(ns);
+                            frame.getSelectedStep().getNamespaces().remove(ns);
                             frame.updateInfo();
                         }
                     }
@@ -621,8 +774,8 @@ public class XConfigTabs extends JTabbedPane {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isBuildin()) {
+                    if (frame.getSelectedStep() != null) {
+                        if (frame.getSelectedStep().isBuildin()) {
                             frame.showWarningMessage("You cannot delete a port of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
@@ -633,7 +786,7 @@ public class XConfigTabs extends JTabbedPane {
                             );
 
                             if (result == 0) {
-                                frame.getSelectedPipeline().getInputs().remove(port);
+                                frame.getSelectedStep().getInputs().remove(port);
                                 frame.updateInfo();
                             }
                         }
@@ -653,8 +806,8 @@ public class XConfigTabs extends JTabbedPane {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
-                        if (frame.getSelectedPipeline().isBuildin()) {
+                    if (frame.getSelectedStep() != null) {
+                        if (frame.getSelectedStep().isBuildin()) {
                             frame.showWarningMessage("You cannot delete a QName of a build-in step, if you do not need this, you can just leave it blank.");
                         } else {
                             int result = JOptionPane.showConfirmDialog(
@@ -665,7 +818,7 @@ public class XConfigTabs extends JTabbedPane {
                             );
 
                             if (result == 0) {
-                                frame.getSelectedPipeline().getOutputs().remove(port);
+                                frame.getSelectedStep().getOutputs().remove(port);
                                 frame.updateInfo();
                             }
                         }
@@ -684,7 +837,7 @@ public class XConfigTabs extends JTabbedPane {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
+                    if (frame.getSelectedStep() != null) {
 
                         int result = JOptionPane.showConfirmDialog(
                                 null,
@@ -694,11 +847,11 @@ public class XConfigTabs extends JTabbedPane {
                         );
 
                         if (result == 0) {
-                            if (pipe == frame.getSelectedPipeline().getOutPipe()) {
-                                frame.getSelectedPipeline().setOutPipe(null);
-                                frame.getSelectedPipeline().setOutPipeFlag(false);
+                            if (pipe == frame.getSelectedStep().getOutPipe()) {
+                                frame.getSelectedStep().setOutPipe(null);
+                                frame.getSelectedStep().setOutPipeFlag(false);
                             } else {
-                                frame.getSelectedPipeline().getPipes().remove(pipe);
+                                frame.getSelectedStep().deletePipe(pipe);
                             }
                             frame.updateInfo();
                         }
@@ -711,14 +864,14 @@ public class XConfigTabs extends JTabbedPane {
 
     private class DeleteSubpipelineButton extends JButton {
 
-        public DeleteSubpipelineButton(final GProcXPipeline child, String text) {
+        public DeleteSubpipelineButton(final GProcXStep child, String text) {
             super(text);
 
             this.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
 
-                    if (frame.getSelectedPipeline() != null) {
+                    if (frame.getSelectedStep() != null) {
 
                         int result = JOptionPane.showConfirmDialog(
                                 null,
@@ -729,10 +882,10 @@ public class XConfigTabs extends JTabbedPane {
 
                         if (result == 0) {
                             if (child != null) {
-                                frame.getSelectedPipeline().deleteChild(child);
+                                frame.getSelectedStep().deleteChild(child);
                             }
                             frame.getCurrentPanel().repaint();
-                            frame.setSelectedPipeline(frame.getMainPipeline());
+                            frame.setSelectedStep(frame.getMainStep());
                         }
                     }
                 }
@@ -770,9 +923,9 @@ public class XConfigTabs extends JTabbedPane {
 
     private class AddDocListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if (frame.getSelectedPipeline() != null) {
+            if (frame.getSelectedStep() != null) {
 
-                if (frame.getSelectedPipeline().isBuildin()) {
+                if (frame.getSelectedStep().isBuildin()) {
                     frame.showWarningMessage("You cannot add a user-defined info to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
@@ -782,7 +935,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().addDoc(new GProcXDoc(inputContent, "empty"));
+                        frame.getSelectedStep().addDoc(new GProcXDoc(inputContent, "empty"));
                         frame.updateInfo();
                     }
                 }
@@ -793,9 +946,9 @@ public class XConfigTabs extends JTabbedPane {
     private class AddElementListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            if (frame.getSelectedPipeline() != null) {
+            if (frame.getSelectedStep() != null) {
 
-                if (frame.getSelectedPipeline().isBuildin()) {
+                if (frame.getSelectedStep().isBuildin()) {
                     frame.showWarningMessage("You cannot add a user-defined QName to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
@@ -805,7 +958,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().addQName(new QName(inputContent, ""));
+                        frame.getSelectedStep().addQName(new QName(inputContent, ""));
                         frame.updateInfo();
                     }
                 }
@@ -815,7 +968,7 @@ public class XConfigTabs extends JTabbedPane {
 
     private class AddNSListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if (frame.getSelectedPipeline() != null) {
+            if (frame.getSelectedStep() != null) {
                 String inputContent = JOptionPane.showInputDialog(
                         null,
                         "Please enter the namespace:",
@@ -823,7 +976,7 @@ public class XConfigTabs extends JTabbedPane {
                 );
 
                 if (inputContent != null) {
-                    frame.getSelectedPipeline().addNamespace(new QName(inputContent, ""));
+                    frame.getSelectedStep().addNamespace(new QName(inputContent, ""));
                     frame.updateInfo();
                 }
             }
@@ -833,9 +986,9 @@ public class XConfigTabs extends JTabbedPane {
     private class AddInPortListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            if (frame.getSelectedPipeline() != null) {
+            if (frame.getSelectedStep() != null) {
 
-                if (frame.getSelectedPipeline().isBuildin()) {
+                if (frame.getSelectedStep().isBuildin()) {
                     frame.showWarningMessage("You cannot add a user-defined port to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
@@ -845,7 +998,7 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().getInputs().add(new InPort(frame.getSelectedPipeline(), inputContent, false, false, "not specified"));
+                        frame.getSelectedStep().getInputs().add(new InPort(frame.getSelectedStep(), inputContent, false, false, "not specified"));
                         frame.updateInfo();
                     }
                 }
@@ -856,9 +1009,9 @@ public class XConfigTabs extends JTabbedPane {
     private class AddOutPortListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            if (frame.getSelectedPipeline() != null) {
+            if (frame.getSelectedStep() != null) {
 
-                if (frame.getSelectedPipeline().isBuildin()) {
+                if (frame.getSelectedStep().isBuildin()) {
                     frame.showWarningMessage("You cannot add a user-defined port to a build-in step.");
                 } else {
                     String inputContent = JOptionPane.showInputDialog(
@@ -868,11 +1021,56 @@ public class XConfigTabs extends JTabbedPane {
                     );
 
                     if (inputContent != null) {
-                        frame.getSelectedPipeline().getOutputs().add(new InPort(frame.getSelectedPipeline(), inputContent, false, false, "not specified"));
+                        frame.getSelectedStep().getOutputs().add(new InPort(frame.getSelectedStep(), inputContent, false, false, "not specified"));
                         frame.updateInfo();
                     }
                 }
             }
+        }
+    }
+
+    private class InlineDialog extends JDialog {
+        public InlineDialog(JFrame f, final IOSource source) {
+            super(f, source.getSourceType());
+            final JTextArea text = new JTextArea(source.getInline());
+            this.add(text);
+
+            this.setBounds(Toolkit.getDefaultToolkit().getScreenSize().width/3,Toolkit.getDefaultToolkit().getScreenSize().height/3,
+                    Toolkit.getDefaultToolkit().getScreenSize().width/4,Toolkit.getDefaultToolkit().getScreenSize().height/4);
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            this.setVisible(true);
+
+            this.addWindowListener(new WindowAdapter()
+            {
+                public void windowClosed(WindowEvent e)
+                {
+                    source.setInline(text.getText());
+                    frame.updateInfo();
+                }
+            });
+        }
+    }
+
+    private class DocInputDialog extends JDialog {
+
+        public DocInputDialog(JFrame f, final GProcXDoc doc) {
+            super(f, doc.getType());
+            final JTextArea text = new JTextArea(doc.getContent());
+            this.add(text);
+
+            this.setBounds(Toolkit.getDefaultToolkit().getScreenSize().width/3,Toolkit.getDefaultToolkit().getScreenSize().height/3,
+                    Toolkit.getDefaultToolkit().getScreenSize().width/4,Toolkit.getDefaultToolkit().getScreenSize().height/4);
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            this.setVisible(true);
+
+            this.addWindowListener(new WindowAdapter()
+            {
+                public void windowClosed(WindowEvent e)
+                {
+                    doc.setContent(text.getText());
+                    frame.updateInfo();
+                }
+            });
         }
     }
 }

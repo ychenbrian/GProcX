@@ -13,9 +13,9 @@ public class GProcXPipe implements Serializable {
     private GProcXPort parent;
     private ArrayList<QName> qnames = new ArrayList<QName>();
     private ArrayList<QName> namespaces = new ArrayList<QName>();
-    private GProcXPipeline fromPipeline = null;
+    private GProcXStep fromPipeline = null;
     private GProcXPort fromPort = null;
-    private GProcXPipeline toPipeline = null;
+    private GProcXStep toPipeline = null;
     private GProcXPort toPort = null;
     private boolean isFromMain = false;
     private boolean isToMain = false;
@@ -81,13 +81,13 @@ public class GProcXPipe implements Serializable {
     }
 
     public boolean isValid() {
-        if (this.getFromPipeline() == null) {
+        if (this.getFromStep() == null) {
             return false;
         }
         if (this.getFromPort() == null) {
             return false;
         }
-        if (this.getToPipeline() == null) {
+        if (this.getToStep() == null) {
             return false;
         }
         if (this.getToPort() == null) {
@@ -96,12 +96,12 @@ public class GProcXPipe implements Serializable {
         return true;
     }
 
-    public void setStartXY(GProcXPipeline pipeline) {
+    public void setStartXY(GProcXStep pipeline) {
         this.startX = pipeline.getX();
         this.startY = pipeline.getY() + pipeline.getH() / 2;
     }
 
-    public void setEndXY(GProcXPipeline pipeline) {
+    public void setEndXY(GProcXStep pipeline) {
         this.endX = pipeline.getX();
         this.endY = pipeline.getY() - pipeline.getH() / 2;
     }
@@ -148,6 +148,14 @@ public class GProcXPipe implements Serializable {
         return parent;
     }
 
+    public void clearFromPort() {
+        this.fromPort = null;
+    }
+
+    public void clearToPort() {
+        this.toPort = null;
+    }
+
     public boolean hasDefineNS(QName ns) {
         if (this.getParent() != null) {
             if (this.getParent().hasDefineNS(ns)) {
@@ -178,11 +186,11 @@ public class GProcXPipe implements Serializable {
         return toPort;
     }
 
-    public GProcXPipeline getFromPipeline() {
+    public GProcXStep getFromStep() {
         return fromPipeline;
     }
 
-    public GProcXPipeline getToPipeline() {
+    public GProcXStep getToStep() {
         return toPipeline;
     }
 
@@ -201,7 +209,7 @@ public class GProcXPipe implements Serializable {
         this.fromPort = fromPort;
     }
 
-    public void setFromPipeline(GProcXPipeline fromPipeline, boolean isMain) {
+    public void setFromStep(GProcXStep fromPipeline, boolean isMain) {
         if (fromPipeline == null) {
             return;
         }
@@ -222,7 +230,7 @@ public class GProcXPipe implements Serializable {
         this.toPort = toPort;
     }
 
-    public void setToPipeline(GProcXPipeline toPipeline, boolean isMain) {
+    public void setToStep(GProcXStep toPipeline, boolean isMain) {
         if (toPipeline == null) {
             return;
         }
@@ -237,13 +245,13 @@ public class GProcXPipe implements Serializable {
     }
 
     public boolean equals(GProcXPipe pipe) {
-        if (this.getFromPipeline() != pipe.getFromPipeline()) {
+        if (this.getFromStep() != pipe.getFromStep()) {
             return false;
         }
         if (this.getFromPort() != pipe.getFromPort()) {
             return false;
         }
-        if (this.getToPipeline() != pipe.getToPipeline()) {
+        if (this.getToStep() != pipe.getToStep()) {
             return false;
         }
         if (this.getToPort() != pipe.getToPort()) {
@@ -286,9 +294,9 @@ public class GProcXPipe implements Serializable {
         // From = myStep : source, to = toStep : source
         String code = "";
 
-        code += "From = " + this.getFromPipeline().getName() + " : ";
-        code += this.getFromPort().getPort() + ", to = ";
-        code += this.getToPipeline().getName() + " : " + this.getToPort().getPort();
+        code += this.getFromStep().getName() + ":";
+        code += this.getFromPort().getPort() + " -> ";
+        code += this.getToStep().getName() + ":" + this.getToPort().getPort();
 
         return code;
     }

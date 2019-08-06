@@ -1,6 +1,6 @@
 package gprocx.mainUI;
 
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -14,14 +14,14 @@ public class XFigureTabs extends JTabbedPane {
     private ArrayList<XPanel> panels;
     private ArrayList<XPanel> tabs;
 
-    public XFigureTabs(int location, XFrame frame, GProcXPipeline mainPipeline) {
+    public XFigureTabs(int location, XFrame frame, GProcXStep mainPipeline) {
         super(location);
         this.frame = frame;
         this.panels = new ArrayList<XPanel>();
         this.tabs = new ArrayList<XPanel>();
 
-        GProcXPipeline initPipeline = mainPipeline;
-        this.addPipeline(initPipeline);
+        GProcXStep initPipeline = mainPipeline;
+        this.addStep(initPipeline);
         this.openTab(initPipeline.getUUID());
 
         this.addChangeListener(new ChangeTab());
@@ -32,18 +32,30 @@ public class XFigureTabs extends JTabbedPane {
         this.getCurrentTab().updateInfo();
     }
 
-    public void addPipeline(GProcXPipeline pipeline) {
+    public void addStep(GProcXStep pipeline) {
         panels.add(new XPanel(frame, pipeline));
     }
 
-    public void newProgram(GProcXPipeline pipeline) {
+    public void removeStep(UUID uuid) {
+        for (XPanel panel : this.panels) {
+            if (panel.getMainPipeline().getUUID() == uuid) {
+                this.openTab(uuid);
+                this.removeCurrentTab();
+
+                this.panels.remove(panel);
+                return;
+            }
+        }
+    }
+
+    public void newProgram(GProcXStep pipeline) {
         this.panels.clear();
         for (int i = 0; i < tabs.size(); i++) {
             this.removeCurrentTab();
         }
         this.tabs.clear();
 
-        this.addPipeline(pipeline);
+        this.addStep(pipeline);
         this.openTab(pipeline.getUUID());
     }
 
@@ -59,7 +71,7 @@ public class XFigureTabs extends JTabbedPane {
     public void addTab(UUID uuid) {
         for (XPanel panel : panels) {
             if (panel.getUUID() == uuid) {
-                this.add(panel.getType(), panel);
+                this.add("<" + panel.getType() + ">", panel);
                 this.tabs.add(panel);
                 return;
             }
@@ -71,13 +83,13 @@ public class XFigureTabs extends JTabbedPane {
 
         if (index >= 0) {   // if already exist the tab
             this.setSelectedIndex(index);
-            this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
-            this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.setSelectedStep(this.getCurrentTab().getMainPipeline());
+            this.frame.setMainStep(this.getCurrentTab().getMainPipeline());
         } else {
             this.addTab(uuid);
             this.setSelectedIndex(this.getTabCount() - 1);
-            this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
-            this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
+            this.frame.setSelectedStep(this.getCurrentTab().getMainPipeline());
+            this.frame.setMainStep(this.getCurrentTab().getMainPipeline());
         }
     }
 
@@ -91,22 +103,22 @@ public class XFigureTabs extends JTabbedPane {
         this.tabs.remove(index);
 
         this.setSelectedIndex(this.getTabCount() - 1);
-        this.frame.setSelectedPipeline(this.getCurrentTab().getMainPipeline());
-        this.frame.setMainPipeline(this.getCurrentTab().getMainPipeline());
+        this.frame.setSelectedStep(this.getCurrentTab().getMainPipeline());
+        this.frame.setMainStep(this.getCurrentTab().getMainPipeline());
     }
 
     public XPanel getCurrentTab() {
         return this.tabs.get(this.getSelectedIndex());
     }
 
-    public GProcXPipeline getCurrentStep() {
+    public GProcXStep getCurrentStep() {
         return this.tabs.get(this.getSelectedIndex()).getMainPipeline();
     }
 
     private class ChangeTab implements ChangeListener {
 
         public void stateChanged(ChangeEvent e) {
-            frame.setMainPipeline(tabs.get(getSelectedIndex()).getMainPipeline());
+            frame.setMainStep(tabs.get(getSelectedIndex()).getMainPipeline());
         }
     }
 }

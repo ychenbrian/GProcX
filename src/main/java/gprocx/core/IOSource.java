@@ -28,6 +28,18 @@ public class IOSource implements Serializable {
         }
     }
 
+    public IOSource(IOSource source) {
+        this.parent = source.parent;
+        for (QName q : source.getQNames()) {
+            this.qnames.add(new QName(q));
+        }
+        for (QName ns : source.getNamespaces()) {
+            this.namespaces.add(new QName(ns));
+        }
+        this.inline = source.getInline();
+        this.sourceType = source.getSourceType();
+    }
+
     public IOSource() {}
 
     public void addQName(QName qname) {

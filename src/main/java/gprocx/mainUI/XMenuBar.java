@@ -4,7 +4,7 @@ import com.xml_project.morganaxproc.*;
 import com.xml_project.morganaxproc.filesystem.XProcFilesystem;
 import com.xml_project.morganaxproc.security.XProcSecurityException;
 import gprocx.core.GProcXProcessor;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 import gprocx.step.StepInfo;
 import nu.xom.Builder;
 import nu.xom.Document;
@@ -31,22 +31,33 @@ public class XMenuBar extends JMenuBar {
         fileMenu.addSeparator();
         JMenuItem importMenuItem = new JMenuItem("Import"); fileMenu.add(importMenuItem);
         JMenuItem exportMenuItem = new JMenuItem("Export"); fileMenu.add(exportMenuItem);
-        fileMenu.addSeparator();
-        JMenuItem exitMenuItem = new JMenuItem("Exit"); fileMenu.add(exitMenuItem);
+        JMenuItem runMenuItem = new JMenuItem("Run"); fileMenu.add(runMenuItem);
 
         JMenu editMenu = new JMenu("Edit");
+        JMenuItem cutMenuItem = new JMenuItem("Cut"); editMenu.add(cutMenuItem);
+        JMenuItem copyMenuItem = new JMenuItem("Copy"); editMenu.add(copyMenuItem);
+        JMenuItem pasteMenuItem = new JMenuItem("Paste"); editMenu.add(pasteMenuItem);
+        editMenu.addSeparator();
+        JMenuItem closeTabMenuItem = new JMenuItem("Close tab"); editMenu.add(closeTabMenuItem);
 
         JMenu insertMenu = new JMenu("Insert");
         JMenuItem pipelineMenuItem = new JMenuItem("Pipeline"); insertMenu.add(pipelineMenuItem);
+        JMenuItem pipeMenuItem = new JMenuItem("Pipe"); insertMenu.add(pipeMenuItem);
+        insertMenu.addSeparator();
         JMenuItem atomicMenuItem = new JMenuItem("Atomic step"); insertMenu.add(atomicMenuItem);
         JMenuItem otherStepMenuItem = new JMenuItem("Other step"); insertMenu.add(otherStepMenuItem);
-        JMenuItem pipeMenuItem = new JMenuItem("Pipe"); insertMenu.add(pipeMenuItem);
-
+        
         newMenuItem.addActionListener(new NewMenu());
         openMenuItem.addActionListener(new OpenMenu());
         saveMenuItem.addActionListener(new SaveMenu());
         importMenuItem.addActionListener(new ImportMenu());
         exportMenuItem.addActionListener(new ExportMenu());
+        runMenuItem.addActionListener(new RunMenu(this.frame));
+
+        cutMenuItem.addActionListener(new CutMenu(this.frame));
+        copyMenuItem.addActionListener(new CopyMenu(this.frame));
+        pasteMenuItem.addActionListener(new PasteMenu(this.frame));
+        closeTabMenuItem.addActionListener(new CloseTabMenu(this.frame));
 
         pipelineMenuItem.addActionListener(new PipelineMenu(this.frame));
         atomicMenuItem.addActionListener(new AtomicMenu(this.frame));
@@ -148,16 +159,28 @@ public class XMenuBar extends JMenuBar {
             );
 
             if (inputContent != null) {
-                GProcXPipeline newPipeline = new GProcXPipeline();
+                GProcXStep newPipeline = new GProcXStep();
 
                 newPipeline.setType((String)inputContent);
-                StepInfo.setPipelineInfo(frame, newPipeline);
+                StepInfo.setStepInfo(frame, newPipeline);
 
-                frame.addMainPipeline(newPipeline);
+                frame.addMainStep(newPipeline);
             }
         }
     }
 
+    public static class CloseTabMenu implements ActionListener {
+        XFrame frame;
+
+        public CloseTabMenu(XFrame frame) {
+            this.frame = frame;
+        }
+    	public void actionPerformed(ActionEvent e) {
+            this.frame.removeCurrentTab();
+            this.frame.setSelectedStep(this.frame.getCurrentStep());
+        }
+    }
+    
     private class OpenMenu implements ActionListener {
 
         public void actionPerformed(ActionEvent event) {
@@ -169,8 +192,8 @@ public class XMenuBar extends JMenuBar {
             try {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
 
-                GProcXPipeline pipeline = (GProcXPipeline) ois.readObject();
-                frame.addMainPipeline(pipeline);
+                GProcXStep pipeline = (GProcXStep) ois.readObject();
+                frame.addMainStep(pipeline);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -184,7 +207,7 @@ public class XMenuBar extends JMenuBar {
     private class SaveMenu implements ActionListener {
 
         public void actionPerformed(ActionEvent event) {
-            GProcXPipeline pipeline = frame.getMainPipeline();
+            GProcXStep pipeline = frame.getMainStep();
 
             File file = showFileSave();
             if (file == null) {
@@ -206,56 +229,85 @@ public class XMenuBar extends JMenuBar {
     private class ImportMenu implements ActionListener {
 
         public void actionPerformed(ActionEvent event) {
+        	
+        	
+        	final Object[] selectionValues = new Object[]{".xpl file", "Oxygen workspace"};
 
-            File file = showFileImport();
-            if (file == null) {
-                return;
+            Object inputContent = JOptionPane.showInputDialog(
+                    null,
+                    "Import from file or Oxygen",
+                    "Source",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    selectionValues,
+                    selectionValues[0]
+            );
+        	
+            if (inputContent != null) {
+            	String choice = (String)inputContent;
+            	Builder parser = new Builder();
+                Document docs = null;
+            	
+            	if (choice.equals(".xpl file")) {
+            		File file = showFileImport();
+                    if (file == null) {
+                    	frame.showErrorMessage("Cannot open this file");
+                        return;
+                    }
+
+                    try {
+                        docs = parser.build(file);
+                    } catch (ParsingException e) {
+                        frame.showErrorMessage(e.getMessage());
+                        return;
+                    } catch (IOException e) {
+                        frame.showErrorMessage(e.getMessage());
+                        return;
+                    }
+            	} else { // from Oxygen workspace
+                    try {
+                        docs = parser.build(new StringReader(frame.getOxygenCode()));
+                    } catch (ParsingException e) {
+                        frame.showErrorMessage(e.getMessage());
+                        return;
+                    } catch (IOException e) {
+                        frame.showErrorMessage(e.getMessage());
+                        return;
+                    }
+            	}
+            	
+            	XProcEngine engine = XProcEngine.newXProc();
+                XProcCompiler compiler = engine.newXProcCompiler();
+                XProcPipeline pipeline = null;
+                try {
+                    XProcSource pipelineSource = new XProcSource(docs);
+                    pipeline = compiler.compile(pipelineSource);
+                } catch (XProcInterfaceException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcSecurityException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcFilesystem.UnsupportedXMLVersionException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (IOException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcCompiler.XProcCompilerException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (NullPointerException e) {
+                    frame.showErrorMessage("This is not a runnable XProc program.");
+                    return;
+                }
+
+                Element mainEle = (Element) docs.getChild(0);
+                GProcXStep newPipeline = new GProcXStep();
+                GProcXProcessor.setPipeline(frame, null, newPipeline, mainEle);
+
+                frame.addMainStep(newPipeline);
             }
-
-            Builder parser = new Builder();
-            Document docs = null;
-            try {
-                docs = parser.build(file);
-                //docs = parser.build(new StringReader(test2));
-            } catch (ParsingException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (IOException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            }
-
-            XProcEngine engine = XProcEngine.newXProc();
-            XProcCompiler compiler = engine.newXProcCompiler();
-            XProcPipeline pipeline = null;
-            try {
-                XProcSource pipelineSource = new XProcSource(docs);
-                pipeline = compiler.compile(pipelineSource);
-            } catch (XProcInterfaceException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (XProcSecurityException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (XProcFilesystem.UnsupportedXMLVersionException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (IOException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (XProcCompiler.XProcCompilerException e) {
-                frame.showErrorMessage(e.getMessage());
-                return;
-            } catch (NullPointerException e) {
-                frame.showErrorMessage("This is not a runnable XProc program.");
-                return;
-            }
-
-            Element mainEle = (Element) docs.getChild(0);
-            GProcXPipeline newPipeline = new GProcXPipeline();
-            GProcXProcessor.setPipeline(frame, null, newPipeline, mainEle);
-
-            frame.addMainPipeline(newPipeline);
         }
     }
 
@@ -276,6 +328,65 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
+    public static class CutMenu implements ActionListener {
+        XFrame frame;
+
+        public CutMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (frame.getSelectedStep() != null) {
+                if (!frame.getSelectedStep().isAtomic()) {
+                    frame.showErrorMessage("You can only cut atomic steps. And you need to select the step first.");
+                    return;
+                }
+
+                //frame.getFigureTabs().removeStep(frame.getSelectedStep().getUUID());
+                frame.setNewStep(new GProcXStep(frame, frame.getSelectedStep()));
+                frame.getMainStep().deleteChild(frame.getSelectedStep());
+
+                frame.setSelectedStep(frame.getMainStep());
+            }
+        }
+    }
+
+    public static class CopyMenu implements ActionListener {
+        XFrame frame;
+
+        public CopyMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (frame.getSelectedStep() != null) {
+                if (!frame.getSelectedStep().isAtomic()) {
+                    frame.showErrorMessage("You can only copy atomic steps. And you need to select the step first.");
+                    return;
+                }
+                frame.setNewStep(new GProcXStep(frame, frame.getSelectedStep()));
+            }
+        }
+    }
+
+    public static class PasteMenu implements ActionListener {
+        XFrame frame;
+
+        public PasteMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (frame.getNewStep() != null) {
+
+                GProcXStep newPipeline = new GProcXStep(frame, frame.getNewStep());
+                newPipeline.setParent(frame.getMainStep());
+                frame.setNewStep(newPipeline);
+                frame.setDrawStepActive(true);
+            }
+        }
+    }
+
     public static class PipelineMenu implements ActionListener {
 
         XFrame frame;
@@ -286,7 +397,7 @@ public class XMenuBar extends JMenuBar {
 
         public void actionPerformed(ActionEvent e) {
 
-            if (!frame.getMainPipeline().getType().equals("p:library")) {
+            if (!frame.getMainStep().getType().equals("p:library")) {
                 XFrame.showErrorMessage("You can only insert pipelines into p:library.");
                 return;
             }
@@ -302,10 +413,13 @@ public class XMenuBar extends JMenuBar {
                     selectionValues[0]
             );
             if (inputContent != null) {
-                frame.setNewStep((String) inputContent);
+                GProcXStep newPipeline = new GProcXStep();
+                newPipeline.setType((String) inputContent);
+                StepInfo.setStepInfo(frame, newPipeline);
+
+                frame.setNewStep(newPipeline);
                 frame.setDrawStepActive(true);
             }
-
         }
     }
 
@@ -319,7 +433,7 @@ public class XMenuBar extends JMenuBar {
 
     	public void actionPerformed(ActionEvent e) {
 
-            if (frame.getMainPipeline().getType().equals("p:library")) {
+            if (frame.getMainStep().getType().equals("p:library")) {
                 XFrame.showErrorMessage("You cannot insert steps into p:library.");
                 return;
             }
@@ -335,7 +449,12 @@ public class XMenuBar extends JMenuBar {
                     selectionValues[0]
             );
             if (inputContent != null) {
-                frame.setNewStep((String) inputContent);
+                //frame.setNewStep((String) inputContent);
+                GProcXStep newPipeline = new GProcXStep();
+                newPipeline.setType((String) inputContent);
+                StepInfo.setStepInfo(frame, newPipeline);
+
+                frame.setNewStep(newPipeline);
                 frame.setDrawStepActive(true);
             }
 
@@ -352,7 +471,7 @@ public class XMenuBar extends JMenuBar {
 
         public void actionPerformed(ActionEvent e) {
 
-            if (frame.getMainPipeline().getType().equals("p:library")) {
+            if (frame.getMainStep().getType().equals("p:library")) {
                 XFrame.showErrorMessage("You cannot insert steps into p:library.");
                 return;
             }
@@ -368,7 +487,11 @@ public class XMenuBar extends JMenuBar {
                     selectionValues[0]
             );
             if (inputContent != null) {
-                frame.setNewStep((String) inputContent);
+                GProcXStep newPipeline = new GProcXStep();
+                newPipeline.setType((String) inputContent);
+                StepInfo.setStepInfo(frame, newPipeline);
+
+                frame.setNewStep(newPipeline);
                 frame.setDrawStepActive(true);
             }
 
@@ -384,7 +507,7 @@ public class XMenuBar extends JMenuBar {
         }
 
         public void actionPerformed(ActionEvent e) {
-            if (frame.getMainPipeline().getType().equals("p:library")) {
+            if (frame.getMainStep().getType().equals("p:library")) {
                 XFrame.showErrorMessage("You cannot insert pips into p:library.");
                 return;
             }
@@ -393,4 +516,74 @@ public class XMenuBar extends JMenuBar {
         }
     }
 
+    public static class RunMenu implements ActionListener {
+        XFrame frame;
+
+        public RunMenu(XFrame frame) {
+            this.frame = frame;
+        }
+
+        public void actionPerformed(ActionEvent event) {
+            if (!frame.getMainStep().getType().equals("p:declare-step") && !frame.getMainStep().getType().equals("p:pipeline")) {
+                frame.showErrorMessage("You can only run root pipelines.");
+            } else {
+                Builder parser = new Builder();
+                Document docs = null;
+
+                try {
+                    docs = parser.build(new StringReader(frame.getMainStep().toString(0)));
+                } catch (ParsingException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (IOException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                }
+
+                XProcEngine engine = XProcEngine.newXProc();
+                XProcCompiler compiler = engine.newXProcCompiler();
+                XProcPipeline pipeline = null;
+                try {
+                    XProcSource pipelineSource = new XProcSource(docs);
+                    pipeline = compiler.compile(pipelineSource);
+                } catch (XProcInterfaceException e) {
+                    //frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcSecurityException e) {
+                    //frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcFilesystem.UnsupportedXMLVersionException e) {
+                    //frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (IOException e) {
+                    //frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (XProcCompiler.XProcCompilerException e) {
+                    frame.showErrorMessage(e.getMessage());
+                    return;
+                } catch (NullPointerException e) {
+                    frame.showErrorMessage("This is not a runnable XProc program.");
+                    return;
+                }
+
+                XProcOutput output = pipeline.run();
+                if (output.wasSuccessful()){
+                    String[] ports = output.getPortNames();
+                    for (int i=0; i < ports.length; i++){
+                        XProcResult result = output.getResults(ports[i]);
+                        String[] documents = result.getDocumentsSerialized();
+                        for (int j=0; j < documents.length; j++)
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    documents[j].substring(38),
+                                    ports[j],
+                                    JOptionPane.PLAIN_MESSAGE
+                            );
+                    }
+                } else {
+                    frame.showErrorMessage("Fail to run this program.");
+                }
+            }
+        }
+    }
 }

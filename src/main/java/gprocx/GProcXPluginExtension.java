@@ -12,6 +12,8 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JTextArea;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.xml.transform.sax.SAXSource;
 
 import org.xml.sax.InputSource;
@@ -33,6 +35,8 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XdmNode;
 import ro.sync.exml.plugin.workspace.WorkspaceAccessPluginExtension;
 import ro.sync.exml.workspace.api.editor.WSEditor;
+import ro.sync.exml.workspace.api.editor.page.author.WSAuthorEditorPage;
+import ro.sync.exml.workspace.api.editor.page.text.WSTextEditorPage;
 import ro.sync.exml.workspace.api.standalone.StandalonePluginWorkspace;
 import ro.sync.exml.workspace.api.standalone.ToolbarComponentsCustomizer;
 import ro.sync.exml.workspace.api.standalone.ToolbarInfo;
@@ -52,42 +56,6 @@ public class GProcXPluginExtension implements WorkspaceAccessPluginExtension {
    * @see ro.sync.exml.plugin.workspace.WorkspaceAccessPluginExtension#applicationStarted(ro.sync.exml.workspace.api.standalone.StandalonePluginWorkspace)
    */
   public void applicationStarted(final StandalonePluginWorkspace pluginWorkspaceAccess) {
-	  
-      
-	  String pipeline_xml = "<p:declare-step xmlns:p=\"http://www.w3.org/ns/xproc\" version=\"1.0\"\n" +
-              "                xmlns:c=\"http://www.w3.org/ns/xproc-step\"\n" +
-              "                xmlns:cx=\"http://xmlcalabash.com/ns/extensions\"\n" +
-              "                xmlns:exf=\"http://exproc.org/standard/functions\"\n" +
-              "                exclude-inline-prefixes=\"cx exf\"\n" +
-              "                name=\"main\">\n" +
-              "<p:input port=\"source\"/>\n" +
-              "<p:output port=\"result\"/>\n" +
-              "\n" +
-              "<p:identity>\n" +
-              "  <p:input port=\"source\">\n" +
-              "    <p:inline><doc/></p:inline>\n" +
-              "  </p:input>\n" +
-              "</p:identity>\n" +
-              "\n" +
-              "</p:declare-step>\n";
-      
-	  
-	  
-	  
-	  
-
-
-      //InputStream stream = new ByteArrayInputStream(pipeline_xml.getBytes());
-      //DocumentBuilder builder = saxon.newDocumentBuilder();
-      //XdmNode pipeline_doc = builder.build(new SAXSource(new InputSource(stream)));
-
-      //XPipeline pipeline = runtime.use(pipeline_doc);
-      
-      
-	  //You can set or read global options.
-	  //The "ro.sync.exml.options.APIAccessibleOptionTags" contains all accessible keys.
-	  //		  pluginWorkspaceAccess.setGlobalObjectProperty("can.edit.read.only.files", Boolean.FALSE);
-	  // Check In action
 
 	  //You can access the content inside each opened WSEditor depending on the current editing page (Text/Grid or Author).  
 	  // A sample action which will be mounted on the main menu, toolbar and contextual menu.
@@ -140,10 +108,10 @@ public class GProcXPluginExtension implements WorkspaceAccessPluginExtension {
 				//Get the current opened XML document
 				  WSEditor editorAccess = pluginWorkspaceAccess.getCurrentEditorAccess(StandalonePluginWorkspace.MAIN_EDITING_AREA);
 				  // The action is available only in Author mode.
-				  if(editorAccess != null){
+				  if (editorAccess != null){
 
-                      try {
-						new XFrame();
+                      try {                    	 
+                    	  new XFrame(pluginWorkspaceAccess);
 					} catch (XProcInterfaceException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

@@ -12,6 +12,11 @@ public class GProcXDoc implements Serializable {
         this.content = content;
     }
 
+    public GProcXDoc(GProcXDoc doc) {
+        this.type = doc.getType();
+        this.content = doc.getContent();
+    }
+
     public String getContent() {
         return content;
     }

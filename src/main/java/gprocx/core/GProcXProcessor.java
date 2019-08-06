@@ -3,7 +3,7 @@ package gprocx.core;
 import gprocx.mainUI.XFrame;
 import gprocx.step.GProcXDoc;
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 import gprocx.step.StepInfo;
 import nu.xom.Element;
 import nu.xom.Elements;
@@ -13,9 +13,9 @@ import java.util.ArrayList;
 
 public class GProcXProcessor {
 
-    public static void setPipeline(XFrame frame, GProcXPipeline parent, GProcXPipeline pipeline, Element pipelineEle) {
+    public static void setPipeline(XFrame frame, GProcXStep parent, GProcXStep pipeline, Element pipelineEle) {
         pipeline.setType(pipelineEle.getQualifiedName());
-        StepInfo.setPipelineInfo(frame, pipeline);
+        StepInfo.setStepInfo(frame, pipeline);
         for (QName qname : getQNames(pipelineEle)) {
             pipeline.addQName(new QName(qname));
         }
@@ -33,11 +33,11 @@ public class GProcXProcessor {
         Elements childEles = pipelineEle.getChildElements();
         for (Element childEle : childEles) {
             if (childEle.getQualifiedName().equals("p:input")) {
-                GProcXPort input = new InPort();
+                GProcXPort input = new InPort(pipeline);
                 setPort(parent, pipeline, input, childEle);
                 pipeline.addInput(input);
             } else if (childEle.getQualifiedName().equals("p:output")) {
-                GProcXPort output = new OutPort();
+                GProcXPort output = new OutPort(pipeline);
                 setPort(parent, pipeline, output, childEle);
                 pipeline.addOutput(output);
             }
@@ -54,7 +54,7 @@ public class GProcXProcessor {
                     continue;
                 }
 
-                GProcXPipeline newPipeline = new GProcXPipeline();
+                GProcXStep newPipeline = new GProcXStep();
                 y += 2*h;
                 x += 15;
                 if (y >= (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
@@ -64,14 +64,14 @@ public class GProcXProcessor {
                 newPipeline.setShape(x, y, w, h);
 
                 setPipeline(frame, pipeline, newPipeline, childEle);
-                frame.addPipeline(newPipeline);
+                frame.addStep(newPipeline);
                 pipeline.addChildren(frame, newPipeline);
             }
         }
         pipeline.updateInfo();
     }
 
-    public static void setPort(GProcXPipeline parent, GProcXPipeline pipeline, GProcXPort port, Element portEle) {
+    public static void setPort(GProcXStep parent, GProcXStep pipeline, GProcXPort port, Element portEle) {
         for (QName qname : getQNames(portEle)) {
             port.addQName(new QName(qname));
         }
@@ -85,7 +85,7 @@ public class GProcXProcessor {
             if (sourceEle.getQualifiedName().equals("p:pipe")) {
                 GProcXPipe pipe = new GProcXPipe();
                 pipe.setParent(port);
-                pipe.setToPipeline(pipeline, parent == null);
+                pipe.setToStep(pipeline, parent == null);
                 pipe.setToPort(port);
 
                 for (int i = 0; i < sourceEle.getNamespaceDeclarationCount(); i++) {
@@ -94,11 +94,11 @@ public class GProcXProcessor {
                 }
 
                 ArrayList<QName> qnames = getQNames(sourceEle);
-                GProcXPipeline from = null;
+                GProcXStep from = null;
                 for (QName qname : qnames) {
                     if (qname.getLexical().equals("step")) {
-                        from = parent.findPipeline(qname.getValue());
-                        pipe.setFromPipeline(from, from == parent);
+                        from = parent.findStep(qname.getValue());
+                        pipe.setFromStep(from, from == parent);
                     }
                 }
                 for (QName qname : qnames) {

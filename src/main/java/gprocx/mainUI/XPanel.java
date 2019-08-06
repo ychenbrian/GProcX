@@ -1,8 +1,7 @@
 package gprocx.mainUI;
 
-import com.xml_project.morganaxproc.XProcInterfaceException;
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,8 +11,8 @@ import java.util.UUID;
 
 public class XPanel extends JPanel {
 
-    private GProcXPipeline mainPipeline;
-    private GProcXPipeline current;
+    private GProcXStep mainPipeline;
+    private GProcXStep current;
     private XFrame frame;
     private GProcXPipe newPipe;
 
@@ -22,7 +21,7 @@ public class XPanel extends JPanel {
     private MouseHandler mouseHandler;
     private MouseMotionHandler mouseMotionHandler;
 
-    public XPanel(XFrame frame, GProcXPipeline mainPipeline) {
+    public XPanel(XFrame frame, GProcXStep mainPipeline) {
         this.frame = frame;
         this.mainPipeline = mainPipeline;
         this.current = null;
@@ -38,7 +37,7 @@ public class XPanel extends JPanel {
 
     }
 
-    public GProcXPipeline findPipeline(Point2D p) {
+    public GProcXStep findPipeline(Point2D p) {
         return mainPipeline.findChild(p);
     }
 
@@ -69,11 +68,11 @@ public class XPanel extends JPanel {
         return this.mainPipeline.getUUID();
     }
 
-    public GProcXPipeline getMainPipeline() {
+    public GProcXStep getMainPipeline() {
         return mainPipeline;
     }
 
-    public void setMainPipeline(GProcXPipeline mainPipeline) {
+    public void setMainPipeline(GProcXStep mainPipeline) {
         this.mainPipeline = mainPipeline;
         repaint();
     }
@@ -86,16 +85,16 @@ public class XPanel extends JPanel {
         g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f));
 
         // set the font
-        Font sansbold14 = new Font("SansSerif", 0, 14);
-        FontMetrics metrics = g2.getFontMetrics(sansbold14);
-        g2.setFont(sansbold14);
+        Font sansbold16 = new Font("SansSerif", 0, 16);
+        FontMetrics metrics = g2.getFontMetrics(sansbold16);
+        g2.setFont(sansbold16);
 
         this.mainPipeline.drawChildren(frame, g2, metrics);
         this.mainPipeline.drawPipes(g2);
         this.mainPipeline.drawPorts(g2, metrics);
     }
 
-    public GProcXPipeline getCurrent() {
+    public GProcXStep getCurrent() {
         return this.current;
     }
 
@@ -107,15 +106,15 @@ public class XPanel extends JPanel {
                 mouseMotionHandler.clear();
 
                 frame.setDrawStepActive(false);
-                frame.setSelectedPipeline(current);
+                frame.setSelectedStep(current);
                 existCurrent = true;
             } else if (frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
-                GProcXPipeline selected = findPipeline(event.getPoint());
+                GProcXStep selected = findPipeline(event.getPoint());
 
                 // if select the main in port of the parent
                 if (selected == null && selectInPort(event.getPoint())) {
                     newPipe = new GProcXPipe();
-                    newPipe.setFromPipeline(mainPipeline, true);
+                    newPipe.setFromStep(mainPipeline, true);
 
                     Object[] selectionValues = new Object[mainPipeline.getInputs().size()];
                     for (int i = 0; i < mainPipeline.getInputs().size(); i++) {
@@ -138,7 +137,7 @@ public class XPanel extends JPanel {
                 } else if (selected != null) {
 
                     newPipe = new GProcXPipe();
-                    newPipe.setFromPipeline(selected, false);
+                    newPipe.setFromStep(selected, false);
 
                     Object[] selectionValues = new Object[selected.getOutputs().size()];
                     for (int i = 0; i < selected.getOutputs().size(); i++) {
@@ -166,11 +165,11 @@ public class XPanel extends JPanel {
                     }
                 }
             } else if (!frame.isDrawPipe01Active() && frame.isDrawPipe02Active()) {
-                GProcXPipeline selected = findPipeline(event.getPoint());
+                GProcXStep selected = findPipeline(event.getPoint());
 
                 // if select the main out port of the parent
                 if (selected == null && selectOutPort(event.getPoint())) {
-                    newPipe.setToPipeline(mainPipeline, true);
+                    newPipe.setToStep(mainPipeline, true);
 
                     Object[] selectionValues = new Object[mainPipeline.getOutputs().size()];
                     for (int i = 0; i < mainPipeline.getOutputs().size(); i++) {
@@ -194,7 +193,7 @@ public class XPanel extends JPanel {
 
                 } else if (selected != null) {
 
-                    newPipe.setToPipeline(selected, false);
+                    newPipe.setToStep(selected, false);
 
                     Object[] selectionValues = new Object[selected.getInputs().size()];
                     for (int i = 0; i < selected.getInputs().size(); i++) {
@@ -228,15 +227,15 @@ public class XPanel extends JPanel {
         public void mouseClicked(MouseEvent event) {
             // remove the current square if double clicked
             if (!frame.isDrawStepActive()) {
-                GProcXPipeline selected = findPipeline(event.getPoint());
+                GProcXStep selected = findPipeline(event.getPoint());
                 if (selected == null) {
                     if (event.getClickCount() == 1) {
-                        frame.setSelectedPipeline(mainPipeline);
+                        frame.setSelectedStep(mainPipeline);
                     }
                     return;
                 }
                 if (event.getClickCount() == 1) {
-                    frame.setSelectedPipeline(selected);
+                    frame.setSelectedStep(selected);
                 } else if (event.getClickCount() == 2) {
                     if (selected.isAtomic()) {
                         frame.showErrorMessage("This is an atomic step.");
@@ -285,7 +284,7 @@ public class XPanel extends JPanel {
                     } else {
                         setCursor(Cursor.getDefaultCursor());
                     }
-                } else {
+                } else { // add the pipe
                     if (!frame.isDrawPipe01Active() && !frame.isDrawPipe02Active()) {
                         setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
                     } else {
@@ -296,15 +295,12 @@ public class XPanel extends JPanel {
                 }
 
 
-            } else {
-                // if the drawing is activated
+            } else { // add the step
                 if (existCurrent) {
-                    try {
-                        current = new GProcXPipeline(frame, frame.getNewStep());
-                    } catch (XProcInterfaceException e) {
-                        e.printStackTrace();
-                    }
-                    frame.addPipeline(current);
+                    //current = new GProcXStep(frame, frame.getNewStep());
+                    current = frame.getNewStep();
+
+                    frame.addStep(current);
                     mainPipeline.addChildren(frame, current);
 
                     existCurrent = false;
@@ -327,8 +323,8 @@ public class XPanel extends JPanel {
                     // drag the current rectangle to center it at (x, y)
                     current.setShape(event.getX() - xDiff, event.getY() - yDiff, current.getW(), current.getH());
                     mainPipeline.updatePipes();
-                    if (frame.getSelectedPipeline().getUUID() != current.getUUID()) {
-                        frame.setSelectedPipeline(current);
+                    if (frame.getSelectedStep().getUUID() != current.getUUID()) {
+                        frame.setSelectedStep(current);
                     }
 
                     frame.updateSequence();
@@ -343,10 +339,12 @@ public class XPanel extends JPanel {
     public void stepPopMenu(Component invoker, Point2D p) {
 
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem deleteMenuItem = new JMenuItem("Delete");
+        JMenuItem cutMenuItem = new JMenuItem("Cut"); popupMenu.add(cutMenuItem);
+        JMenuItem copyMenuItem = new JMenuItem("Copy"); popupMenu.add(copyMenuItem);
+        JMenuItem deleteMenuItem = new JMenuItem("Delete"); popupMenu.add(deleteMenuItem);
 
-        popupMenu.add(deleteMenuItem);
-
+        cutMenuItem.addActionListener(new XMenuBar.CutMenu(this.frame));
+        copyMenuItem.addActionListener(new XMenuBar.CopyMenu(this.frame));
         deleteMenuItem.addActionListener(new DeletePopMenu(this.frame, findPipeline(p), this));
 
         popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
@@ -355,31 +353,35 @@ public class XPanel extends JPanel {
     public void generalPopMenu(Component invoker, Point2D p) {
 
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenu addMenu = new JMenu("Add");
-        JMenuItem atomicMenuItem = new JMenuItem("Atomic step");
-        JMenuItem pipeMenuItem = new JMenuItem("Pipe");
-        addMenu.add(atomicMenuItem);
-        addMenu.add(pipeMenuItem);
 
-        JMenuItem closeMenuItem = new JMenuItem("Close tab");
+        JMenu addMenu = new JMenu("Add"); popupMenu.add(addMenu);
+        JMenuItem pipelineMenuItem = new JMenuItem("Pipeline"); addMenu.add(pipelineMenuItem);
+        JMenuItem atomicMenuItem = new JMenuItem("Atomic step"); addMenu.add(atomicMenuItem);
+        JMenuItem otherMenuItem = new JMenuItem("Other step"); addMenu.add(otherMenuItem);
+        JMenuItem pipeMenuItem = new JMenuItem("Pipe"); addMenu.add(pipeMenuItem);
 
-        popupMenu.add(addMenu);
-        popupMenu.add(closeMenuItem);
+        JMenuItem pasteMenuItem = new JMenuItem("Paste"); popupMenu.add(pasteMenuItem);
+        JMenuItem closeMenuItem = new JMenuItem("Close tab"); popupMenu.add(closeMenuItem);
 
+
+        pipelineMenuItem.addActionListener(new XMenuBar.PipelineMenu(this.frame));
         atomicMenuItem.addActionListener(new XMenuBar.AtomicMenu(this.frame));
+        otherMenuItem.addActionListener(new XMenuBar.OtherStepMenu(this.frame));
         pipeMenuItem.addActionListener(new XMenuBar.PipeMenu(this.frame));
-        closeMenuItem.addActionListener(new XToolbar.CloseActionListener(this.frame));
+
+        pasteMenuItem.addActionListener(new XMenuBar.PasteMenu(this.frame));
+        closeMenuItem.addActionListener(new XMenuBar.CloseTabMenu(this.frame));
 
         popupMenu.show(invoker, (int)p.getX(), (int)p.getY());
     }
 
     public static class DeletePopMenu implements ActionListener {
 
-        GProcXPipeline select;
+        GProcXStep select;
         XFrame frame;
         XPanel panel;
 
-        public DeletePopMenu(XFrame frame, GProcXPipeline select, XPanel panel) {
+        public DeletePopMenu(XFrame frame, GProcXStep select, XPanel panel) {
             this.frame = frame;
             this.panel = panel;
             this.select = select;
@@ -387,17 +389,17 @@ public class XPanel extends JPanel {
         public void actionPerformed(ActionEvent e) {
             int result = JOptionPane.showConfirmDialog(
                     null,
-                    "Remove this subpipeline?",
+                    "Remove this step or pipeline?",
                     "Warning",
                     JOptionPane.YES_NO_CANCEL_OPTION
             );
 
             if (result == 0) {
                 if (this.select != null) {
-                    this.frame.getMainPipeline().deleteChild(this.select);
+                    this.frame.getFigureTabs().removeStep(this.select.getUUID());
+                    this.frame.getMainStep().deleteChild(this.select);
                 }
-                this.panel.repaint();
-                this.frame.setSelectedPipeline(this.frame.getMainPipeline());
+                this.frame.setSelectedStep(this.frame.getMainStep());
             }
         }
     }

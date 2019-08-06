@@ -1,18 +1,44 @@
 package gprocx.core;
 
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import java.io.Serializable;
 
 public class InPort extends GProcXPort implements Serializable {
 
-    public InPort(GProcXPipeline parent, String port, boolean primary, boolean sequence, String kind) {
+    public InPort(GProcXStep parent, String port, boolean primary, boolean sequence, String kind) {
         super(parent, port, primary, sequence, kind);
     }
 
-    public InPort() {
-        super();
+    public InPort(GProcXStep parent) {
+        super(parent);
+    }
+
+    public InPort(GProcXPort in) {
+        super(in);
+    }
+
+    @Override
+    public boolean isPrimary() {
+        for (QName qname : this.qnames) {
+            if (qname.getLexical().equals("primary")) {
+                return Boolean.valueOf(qname.getValue());
+            }
+        }
+
+        int num = this.parent.getInputs().size();
+        for (GProcXPort port : this.parent.getInputs()) {
+            if (port.getPort().equals("parameter")) {
+                num -= 1;
+            }
+        }
+
+        if (!this.getPort().equals("parameter") && num <= 1) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override

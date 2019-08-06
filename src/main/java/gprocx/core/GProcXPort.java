@@ -1,40 +1,46 @@
 package gprocx.core;
 
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class GProcXPort implements Serializable {
-
-    protected String port = "source";
-    protected boolean primary = true;
-    protected boolean sequence = false;
-    protected String kind;
-
-    protected GProcXPipeline parent;
+    protected GProcXStep parent;
     protected ArrayList<IOSource> sources = new ArrayList<IOSource>();
     protected ArrayList<GProcXPipe> pipes = new ArrayList<GProcXPipe>();
     protected ArrayList<QName> qnames = new ArrayList<QName>();
     protected ArrayList<QName> namespaces = new ArrayList<QName>();
 
 
-    public GProcXPort(GProcXPipeline parent, String port, boolean primary, boolean sequence, String kind) {
+    public GProcXPort(GProcXStep parent, String port, boolean primary, boolean sequence, String kind) {
         this.sources = new ArrayList<IOSource>();
         this.qnames = new ArrayList<QName>();
         this.pipes = new ArrayList<GProcXPipe>();
 
         this.parent = parent;
-        this.port = port;
-        this.primary = primary;
-        this.sequence = sequence;
-        this.kind = kind;
-
-        this.addQName(new QName("port", this.port));
+        this.addQName(new QName("port", port));
+        this.addQName(new QName("primary", String.valueOf(primary)));
+        this.addQName(new QName("sequence", String.valueOf(sequence)));
     }
 
-    public GProcXPort() {}
+    public GProcXPort(GProcXStep parent) {
+        this.parent = parent;
+    }
+
+    public GProcXPort(GProcXPort port) {
+        this.parent = port.getParent();
+        for (IOSource source : port.getSources()) {
+            this.sources.add(new IOSource(source));
+        }
+        for (QName q : port.getQNames()) {
+            this.qnames.add(new QName(q));
+        }
+        for (QName ns : port.getNamespaces()) {
+            this.namespaces.add(new QName(ns));
+        }
+    }
 
     public void addQName(QName qname) {
         this.qnames.add(qname);
@@ -44,11 +50,11 @@ public class GProcXPort implements Serializable {
         return this.qnames;
     }
 
-    public void setParent(GProcXPipeline parent) {
+    public void setParent(GProcXStep parent) {
         this.parent = parent;
     }
 
-    public GProcXPipeline getParent() {
+    public GProcXStep getParent() {
         return parent;
     }
 
@@ -112,14 +118,7 @@ public class GProcXPort implements Serializable {
         return null;
     }
 
-    public boolean isPrimary() {
-        for (QName qname : this.qnames) {
-            if (qname.getLexical().equals("primary")) {
-                return Boolean.valueOf(qname.getValue());
-            }
-        }
-        return true;
-    }
+    public boolean isPrimary() { return false; }
 
     public boolean isSequence() {
         for (QName qname : this.qnames) {

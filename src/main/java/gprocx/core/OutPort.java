@@ -1,18 +1,22 @@
 package gprocx.core;
 
 import gprocx.step.GProcXPipe;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 
 import java.io.Serializable;
 
 public class OutPort extends GProcXPort implements Serializable {
 
-    public OutPort(GProcXPipeline parent, String port, boolean primary, boolean sequence, String kind) {
+    public OutPort(GProcXStep parent, String port, boolean primary, boolean sequence, String kind) {
         super(parent, port, primary, sequence, kind);
     }
 
-    public OutPort() {
-        super();
+    public OutPort(GProcXStep parent) {
+        super(parent);
+    }
+
+    public OutPort(GProcXPort out) {
+        super(out);
     }
 
     @Override
@@ -23,6 +27,21 @@ public class OutPort extends GProcXPort implements Serializable {
             }
         }
         return "result";
+    }
+
+    @Override
+    public boolean isPrimary() {
+        for (QName qname : this.qnames) {
+            if (qname.getLexical().equals("primary")) {
+                return Boolean.valueOf(qname.getValue());
+            }
+        }
+
+        if (this.parent.getInputs().size() <= 1) {
+            return true;
+        }
+
+        return false;
     }
 
     public String toString(int retract) {

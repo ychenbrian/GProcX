@@ -3,16 +3,14 @@ package gprocx.step;
 import gprocx.core.*;
 import gprocx.mainUI.XFrame;
 
-import java.awt.*;
-
 public class StepInfo {
 
     public StepInfo() {}
 
-    public static void setPipelineInfo(XFrame frame, GProcXPipeline pipeline) {
+    public static void setStepInfo(XFrame frame, GProcXStep pipeline) {
 
         String type = pipeline.getType();
-        //GProcXPipeline newPipeline = new GProcXPipeline(frame, type);
+        //GProcXStep newPipeline = new GProcXStep(frame, type);
 
         /*
          else if (type.equals("")) {
@@ -92,7 +90,7 @@ public class StepInfo {
             pipeline.setAtomic(false);
             pipeline.setBuildin(true);
         } else if (type.equals("p:catch")) {
-            pipeline.addDoc(new GProcXDoc("p:documentation", "A recovery (or “catch”) pipeline is identified with a p:catch element. If the recovery subpipeline is evaluated, the outputs of the recovery subpipeline are the outputs of the p:try step."));
+            pipeline.addDoc(new GProcXDoc("p:documentation", "A recovery (or \"catch\") pipeline is identified with a p:catch element. If the recovery subpipeline is evaluated, the outputs of the recovery subpipeline are the outputs of the p:try step."));
             pipeline.setAtomic(false);
             pipeline.setBuildin(true);
         } else if (type.equals("p:with-option")) {

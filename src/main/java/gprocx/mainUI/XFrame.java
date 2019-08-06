@@ -1,10 +1,16 @@
 package gprocx.mainUI;
 
 import com.xml_project.morganaxproc.XProcInterfaceException;
-import gprocx.step.GProcXPipeline;
+import gprocx.step.GProcXStep;
 import gprocx.step.StepInfo;
+import ro.sync.exml.workspace.api.editor.WSEditor;
+import ro.sync.exml.workspace.api.editor.page.text.WSTextEditorPage;
+import ro.sync.exml.workspace.api.standalone.StandalonePluginWorkspace;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
 import java.awt.*;
 import java.util.UUID;
 
@@ -14,16 +20,16 @@ public class XFrame {
     private JSplitPane splitPane;
     private XFigureTabs figureTabs;
     private XConfigTabs configTabs;
-    private XToolbar toolbar;
-    private GProcXPipeline mainPipeline = null;
-    private GProcXPipeline selectedPipeline = null;
-    private String newStep = "p:error";
+    //private XToolbar toolbar;
+    private GProcXStep mainStep = null;
+    private GProcXStep selectedStep = null;
+    private GProcXStep newStep = null;
 
-    //
     private String[] atomicTypes;
+    private StandalonePluginWorkspace WSAccess;
 
     // variables for drawing
-    private boolean drawPipelineActive = false;
+    private boolean drawStepActive = false;
     private boolean drawPipe01Active = false;
     private boolean drawPipe02Active = false;
 
@@ -31,9 +37,10 @@ public class XFrame {
     private JTextArea code;
 
     // constructor
-    public XFrame() throws XProcInterfaceException {
+    public XFrame(StandalonePluginWorkspace pluginWorkspaceAccess) throws XProcInterfaceException {
 
         // setting of the frame
+    	this.WSAccess = pluginWorkspaceAccess;
     	this.frame = new JFrame("GProcX - A GUI Tool For XProc");  ////////////////////
     	this.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     	this.frame.setVisible(true);
@@ -42,19 +49,20 @@ public class XFrame {
     	this.atomicTypes = StepInfo.getAtomicTypes();
 
     	// toolbar
-        this.toolbar = new XToolbar(this);
-        this.frame.getContentPane().add(this.toolbar, BorderLayout.PAGE_START);
+        //this.toolbar = new XToolbar(this);
+        //this.frame.getContentPane().add(this.toolbar, BorderLayout.PAGE_START);
 
-        this.code = new JTextArea("EmbeddedTest code");
+        this.code = new JTextArea("");
+        this.code.setEditable(false);
         //this.code.setLineWrap(true);
 
         // set the configuration tabs on the left, more details in mainUI.XConfigTabs
         this.configTabs = new XConfigTabs(this);
         this.frame.getContentPane().add(this.configTabs, BorderLayout.WEST);
 
-        // set init selected pipeline
-        this.selectedPipeline = new GProcXPipeline(this, "p:declare-step");
-        this.mainPipeline = this.selectedPipeline;
+        // set init selected step
+        this.selectedStep = new GProcXStep(this, "p:declare-step");
+        this.mainStep = this.selectedStep;
 
         // set the menu bar, more details in mainUI.XMenuBar
         this.frame.setJMenuBar(new XMenuBar(this));
@@ -64,7 +72,7 @@ public class XFrame {
         codePanel.add(this.code);
 
         // tab
-        this.figureTabs = new XFigureTabs(JTabbedPane.TOP, this, this.mainPipeline);
+        this.figureTabs = new XFigureTabs(JTabbedPane.TOP, this, this.mainStep);
 
         this.splitPane = new JSplitPane();
         this.splitPane.setLeftComponent(this.figureTabs);
@@ -82,17 +90,18 @@ public class XFrame {
     public void updateInfo() {
         //this.figureTabs.updateInfo();
         this.configTabs.updateInfo();
-        if (this.mainPipeline != null) {
-            this.mainPipeline.updateInfo();
-            this.setCode(this.mainPipeline.toString(0));
+        if (this.mainStep != null) {
+            this.mainStep.updateInfo();
+            this.setCode(this.mainStep.toString(0));
         }
     }
 
-    // update the sequence of pipelines only
+    // update the sequence of steps only
     public void updateSequence() {
-        if (this.mainPipeline != null) {
-            this.mainPipeline.updateInfo();
-            this.setCode(this.mainPipeline.toString(0));
+        if (this.mainStep != null) {
+            this.mainStep.updateInfo();
+            this.getCurrentPanel().repaint();
+            this.setCode(this.mainStep.toString(0));
         }
     }
 
@@ -103,37 +112,29 @@ public class XFrame {
 
     // activate the step drawing
     public void setDrawStepActive(boolean drawStepActive) {
-        this.drawPipelineActive = drawStepActive;
+        this.drawStepActive = drawStepActive;
     }
 
     // checking the step drawing status
     public boolean isDrawStepActive() {
-        return drawPipelineActive;
+        return drawStepActive;
     }
 
-    public void setNewStep(String newStep) {
-        this.newStep = newStep;
+    public void addMainStep(GProcXStep mainStep) {
+        this.mainStep = mainStep;
+        this.setSelectedStep(mainStep);
+
+        this.figureTabs.addStep(mainStep);
+        this.figureTabs.openTab(mainStep.getUUID());
     }
 
-    public void addMainPipeline(GProcXPipeline mainPipeline) {
-        this.mainPipeline = mainPipeline;
-        this.setSelectedPipeline(mainPipeline);
-
-        this.figureTabs.addPipeline(mainPipeline);
-        this.figureTabs.openTab(mainPipeline.getUUID());
+    public void setMainStep(GProcXStep mainStep) {
+        this.mainStep = mainStep;
+        this.setSelectedStep(mainStep);
     }
 
-    public void setMainPipeline(GProcXPipeline mainPipeline) {
-        this.mainPipeline = mainPipeline;
-        this.setSelectedPipeline(mainPipeline);
-    }
-
-    public String getNewStep() {
-        return newStep;
-    }
-
-    public GProcXPipeline getMainPipeline() {
-        return mainPipeline;
+    public GProcXStep getMainStep() {
+        return mainStep;
     }
 
     public void setDrawPipe01Active(boolean drawPipe01Active) {
@@ -164,22 +165,49 @@ public class XFrame {
         return this.code.getText();
     }
 
-    public GProcXPipeline getSelectedPipeline() {
-        return selectedPipeline;
+    public GProcXStep getSelectedStep() {
+        return selectedStep;
     }
 
-    public void setSelectedPipeline(GProcXPipeline selectedPipeline) {
-        this.selectedPipeline = selectedPipeline;
+    public void setSelectedStep(GProcXStep selectedStep) {
+        this.selectedStep = selectedStep;
         updateInfo();
     }
 
+    public String getOxygenCode() {
+    	WSEditor editorAccess = this.WSAccess.getCurrentEditorAccess(StandalonePluginWorkspace.MAIN_EDITING_AREA);
+    	if (editorAccess != null) {
+    		WSTextEditorPage textPage = (WSTextEditorPage) editorAccess.getCurrentPage();
+      	    Document doc = textPage.getDocument();
+      	    
+      	    try {
+				return doc.getText(0, doc.getLength());
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+    	}
+    	return "";
+    }
+    
     public XPanel getCurrentPanel() {
         return this.figureTabs.getCurrentTab();
     }
 
-    public void addPipeline(GProcXPipeline pipeline) {
-        this.figureTabs.addPipeline(pipeline);
-        this.selectedPipeline = pipeline;
+    public void addStep(GProcXStep step) {
+        this.figureTabs.addStep(step);
+        this.selectedStep = step;
+    }
+
+    public XFigureTabs getFigureTabs() {
+        return figureTabs;
+    }
+
+    public GProcXStep getNewStep() {
+        return newStep;
+    }
+
+    public void setNewStep(GProcXStep newStep) {
+        this.newStep = newStep;
     }
 
     public void openTab(UUID uuid) {
@@ -190,7 +218,7 @@ public class XFrame {
         this.figureTabs.removeCurrentTab();
     }
 
-    public GProcXPipeline getCurrentPipeline() {
+    public GProcXStep getCurrentStep() {
         return this.figureTabs.getCurrentStep();
     }
 
