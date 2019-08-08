@@ -3,7 +3,7 @@ GProcX is the extended version of GProc, these two tools are both for XProc. XPr
 ![The main interface of GProcX](https://github.com/ychenbrian/GProcX/blob/master/image/gui.jpg)
 
 ## Installation
-This add-on is compatible with Oxygen XML Editor 17.0 or higher.
+This add-on is compatible with Oxygen XML Editor 17.0 or higher. The installation time for the tool will be less than five minutes.
 
 To install the add-on, follow these instructions:
 
@@ -37,7 +37,7 @@ You can save the current pipeline at anytime by clicking `File -> Save`. The sav
 GProcX supports `File -> Export` and `File -> Run` the entire pipeline.
 
 ## Features
-The main feature is, developers can import a XProc program to GProcX, then check or edit this pipeline.
+The main feature is, developers can import an XProc program from file or from Oxygen to GProcX. This feature allows them to check or edit an existing pipeline.
 
 GProcX uses MorganaXProc to validate and complies XProc programs.
 
