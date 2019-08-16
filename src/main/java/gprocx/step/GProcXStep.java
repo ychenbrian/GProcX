@@ -132,8 +132,6 @@ public class GProcXStep implements Comparable<GProcXStep>, Serializable {
                 GProcXPort fromport = getPrimaryInport(this);
                 if (fromport == null || pipe.getToPort() == null) {
                     pipe.clearFromPort();
-                } else if (fromport.isSequence() && !pipe.getToPort().isSequence()) {
-                    pipe.clearFromPort();
                 } else {
                     pipe.setFromPort(fromport);
                 }
@@ -146,8 +144,6 @@ public class GProcXStep implements Comparable<GProcXStep>, Serializable {
 
                 GProcXPort fromport = getPrimaryOutport(this.getChildren().get(i - 1));
                 if (fromport == null || pipe.getToPort() == null) {
-                    pipe.clearFromPort();
-                } else if (fromport.isSequence() && !pipe.getToPort().isSequence()) {
                     pipe.clearFromPort();
                 } else {
                     pipe.setFromPort(fromport);
@@ -187,8 +183,6 @@ public class GProcXStep implements Comparable<GProcXStep>, Serializable {
 
                 GProcXPort fromport = getPrimaryOutport(last);
                 if (fromport == null || this.outPipe.getToPort() == null) {
-                    this.outPipe.clearFromPort();
-                } else if (fromport.isSequence() && !this.outPipe.getToPort().isSequence()) {
                     this.outPipe.clearFromPort();
                 } else {
                     this.outPipe.setFromPort(fromport);

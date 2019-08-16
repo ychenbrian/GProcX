@@ -552,7 +552,7 @@ public class XConfigTabs extends JTabbedPane {
             falseButton.setSelected(true);
         }
 
-        if (!frame.getSelectedStep().isAtomic()) {
+        if (!frame.getSelectedStep().isBuildin()) {
             trueButton.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     port.setSequence(true);
